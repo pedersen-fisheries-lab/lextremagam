@@ -32,9 +32,9 @@ quantify_lextrema <- function(model, step_size = NULL, conf_level= 0.95){
                                         newdata = marginaleffects::datagrid(x = new_x),
                                         conf_level = conf_level)
 
-  est_slopes <- find_segments(est_slopes)
+  quant_segments <- find_segments(est_slopes)
 
-  return(est_slopes)
+  return(quant_segments)
 }
 
 #' Identify the local extremas
@@ -74,82 +74,45 @@ find_segments <- function(est_slopes){
 #'
 #' @returns returns the est_slopes object with an added column defining the sections
 .eval_segments <- function(est_slopes){
-  slope_sections <- dplyr::group_by(est_slopes, seg_id)
-  slope_sections <- dplyr::summarize(slope_sections, slope_sign=mean(slope_sign))
-  slope_sections <- dplyr::ungroup(slope_sections)
-  slope_sections$lag <- dplyr::lag(slope_sections$slope_sign)
-  slope_sections$lead <- dplyr::lead(slope_sections$slope_sign)
-  slope_sections$feature <- ifelse(slope_sections$slope_sign==1, "increase",
-                                   ifelse(slope_sections$slope_sign==-1, "decrease",
-                                          ifelse(slope_sections$lag==1 & slope_sections$lead == -1 , "peak",
-                                                 ifelse(slope_sections$lag== -1 & slope_sections$lead == 1, "trough",
-                                                        ifelse(slope_sections$lag== 1 & slope_sections$lead == 1, "increase_step",
-                                                               ifelse(slope_sections$lag== -1 & slope_sections$lead == -1, "decrease_step",
+  slope_segments <- dplyr::group_by(est_slopes, seg_id)
+  slope_segments <- dplyr::summarize(slope_segments, slope_sign=mean(slope_sign), x_start=dplyr::first(x), x_end=dplyr::last(x))
+  slope_segments <- dplyr::ungroup(slope_segments)
+  slope_segments$lag <- dplyr::lag(slope_segments$slope_sign)
+  slope_segments$lead <- dplyr::lead(slope_segments$slope_sign)
+  slope_segments$feature <- ifelse(slope_segments$slope_sign==1, "increase",
+                                   ifelse(slope_segments$slope_sign==-1, "decrease",
+                                          ifelse(slope_segments$lag==1 & slope_segments$lead == -1 , "peak",
+                                                 ifelse(slope_segments$lag== -1 & slope_segments$lead == 1, "trough",
+                                                        ifelse(slope_segments$lag== 1 & slope_segments$lead == 1, "increase_step",
+                                                               ifelse(slope_segments$lag== -1 & slope_segments$lead == -1, "decrease_step",
                                                                       "edge_flat"))))))
-  est_slopes <- dplyr::full_join(est_slopes, slope_sections[, -2], by="seg_id")
+  est_slopes <- dplyr::full_join(est_slopes, slope_segments[, -2], by="seg_id")
 
-  return(est_slopes)
+
+  segments <- list("model_slopes"=est_slopes,
+                   "segment_summary"= slope_segments)
+
+  return(segments)
 }
 
 
 
 
 
-
-
-
+quantify_sig_sin <- quantify_lextrema(gam_sig_sin)
 #
-#   test <- data.frame(x = seq(0, 3.96, by=.04),
-#                      ytrue=sin(seq(0, 3.96, by=.04)),
-#                      y=sin(seq(0, 3.96, by=.04))+rnorm(100, 0, .2))
-#   gam1 <- gam(y~s(x), data=test)
-#   plot(gam1, residuals=TRUE, cex=1, pch=1)
-#   slopes1 <- slopes(gam1)
-#   slopes1
-#   d10 <- data.frame( rowid= which(slopes1$conf.low<0&slopes1$conf.high>0),
-#                      x= slopes1$x[ which(slopes1$conf.low<0&slopes1$conf.high>0)])
-#   d10
-#   abline(v=min(d10$x), col="red")
-#   abline(v=max(d10$x), col="red")
-#   abline(v=test$x[which(test$ytrue==max(test$ytrue))], col="darkgreen")
-#
-#
-# 1-fit gam
-# 2-find slope
-# 3-identify extrema ranges
+# sig_sin_plot <- draw(gam_sig_sin, residuals = TRUE)
 
+smooth_sig_sin <- smooth_estimates(gam_sig_sin)
+confint_sig_sin <- add_confint(smooth_sig_sin)
 
+ggplot()+
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, x = x),
+                      alpha = 0.2, data=confint_sig_sin) +
+  geom_line(aes(x=gam_sig_sin$model$x, y=gam_sig_sin$fitted.values-coef(gam_sig_sin)[1]))+
+  geom_rect(aes(xmin=quantify_sig_sin$segment_summary$x_start, xmax=quantify_sig_sin$segment_summary$x_end, ymin=-Inf, ymax=Inf, fill=quantify_sig_sin$segment_summary$feature), alpha=.2)+
+  geom_point(aes(x=quantify_sig_sin$x, y=quantify_sig_sin$slope_sign, colour=quantify_sig_sin$feature))
 
-#   if(est_slopes$conf.low <0 & est_slopes$conf.high <0){
-#   return(as.factor(-1))
-# } else if (est_slopes$conf.low <=0 & est_slopes$conf.high >=0){
-#   return(as.factor(-0))
-# } else if (est_slopes$conf.low > 0 & est_slopes$conf.high > 0) {
-#   return(as.factor(1))
-# } else {
-#   return(NA)
-# }
-# est_slopes$seg_id <- data.table::rleid(est_slopes$lextreme)
-# est_slopes$p_or_t <- #FIGURE OUT HOW TO IDENTIFY PEAKS OR MINIMA ???
-
-
-
-
-
-
-# mutate(lag=slope_sign-lag(slope_sign),
-#        lead=lead(slope_sign)-slope_sign)%>%
-# mutate(feature=ifelse(lead==0 & lag==-1,
-#                       "inc_to_flat",
-#                       ifelse(lead==0 & lag == 1,
-#                              "dec_to_flat",
-#                              ifelse(lead==-1 & lag == 0,
-#                                     "flat_to_dec",
-#                                     ifelse(lead == 1 & lag == 0,
-#                                            "flat_to_inc", "const")))))
-#
-# for( i in unique(est_slopes$seg_id)){
-#
-#   groub_by( grp= lag(slope_sign))
-#
-#   summarize by group id and do checks on that then rejoin it DUUUUUUHHHHHHHH
+ggplot(data=quantify_sig_sin$model_slopes)+
+  geom_point(aes(x=x, y=estimate, colour=feature), size=0.1)+
+  geom_ribbon(aes(x=x, ymin=conf.low, ymax=conf.high), alpha=0.5)
