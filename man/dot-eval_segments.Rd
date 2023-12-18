@@ -4,10 +4,12 @@
 \alias{.eval_segments}
 \title{Evaluate  sections}
 \usage{
-.eval_segments(est_slopes)
+.eval_segments(est_slopes, var)
 }
 \arguments{
 \item{est_slopes}{gam model object to be evaluated}
+
+\item{var}{predictor variable name}
 }
 \value{
 returns the est_slopes object with an added column defining the sections

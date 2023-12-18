@@ -4,10 +4,12 @@
 \alias{find_segments}
 \title{Identify the local extremas}
 \usage{
-find_segments(est_slopes)
+find_segments(est_slopes, var)
 }
 \arguments{
 \item{est_slopes}{an output of the marginaleffects::slopes function, including the row ID, the x and y values, the conf.low and conf.high}
+
+\item{var}{predictor variable name}
 }
 \description{
 Identify the local extremas
