@@ -4,10 +4,12 @@
 \alias{quantify_lextrema}
 \title{Estimate the first derivative}
 \usage{
-quantify_lextrema(model, step_size = NULL, conf_level = 0.95)
+quantify_lextrema(mod, var = NULL, step_size = NULL, conf_level = 0.95)
 }
 \arguments{
-\item{model}{gam model object to be evaluated}
+\item{mod}{gam model object to be evaluated}
+
+\item{var}{predictor variable over which the slope is evaluated}
 
 \item{step_size}{the step size at which to evaluate the first derivative}
 
