@@ -26,3 +26,12 @@
 #' }
 #' @source see data-raw
 "data_compr"
+
+#' List of approved codes for segment features
+#'
+#' Reference list for all possible segment feature codes
+#'
+#' @format ## `feature_codes`
+#' A vector with 8 possible values
+#' @source see data-raw
+"feature_codes"
