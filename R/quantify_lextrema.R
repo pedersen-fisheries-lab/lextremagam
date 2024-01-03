@@ -68,6 +68,7 @@ quantify_lextrema <- function(mod, var = NULL, step_size = NULL, conf_level= 0.9
   #characterizing the curve segments
   quant_segments <- find_segments(est_slopes, var)
   quant_segments$model <- mod
+  quant_segments$var <- var
 
   class(quant_segments) <- c("lextrema", class(quant_segments))
 
