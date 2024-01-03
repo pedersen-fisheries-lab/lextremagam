@@ -1,0 +1,95 @@
+---
+title: "lextremagam_example"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{lextremagam_example}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(lextremagam)
+library(ggplot2)
+```
+
+
+# Complex curve example
+
+Let's look at an example where the function starts flat, then increases, 
+
+```{r}
+data("data_compr")
+plot(y~x, cex=.7, col="darkgrey", data_compr)
+lines(y_true~x, data_compr)
+
+```
+
+## Fitting the gam
+Let's now fit a gam of our choice to the data. Here, I am using adaptive splines with default settings to account for the abrupt changes in the curve shape 
+
+```{r}
+gam_compr <- mgcv::gam(y~s(x, bs="ad"), data=data_compr)
+
+gratia::appraise(gam_compr)
+gratia::draw(gam_compr, residuals=TRUE)
+
+```
+
+## Assessing the curve segments
+Now, let's evaluate the first derivative along the lenght of the curve to identify peaks and troughs.
+
+For the quantify_lextrema function, var defines which predictor for which the first derivative is being assessed. 
+
+The step size defines how small of an interval the derivative is evaluated. To get accurate confidence intervals, the step_size should be set as small as possible. Please note that the smaller the step size, the more accurate the confidence interval will be. This is ideally set at at least 1000th of your data's predictor interval. For example, if your data is evaluated at every 1 unit of the predictor, the step size should be 0.001. Please note that the smaller the step size, the longer the computation time will be, and the larger the output object will be. 
+
+```{r}
+lextrema <- lextremagam::quantify_lextrema(mod = gam_compr, var = "x", step_size = 0.1, conf_level = .95)
+
+print(lextrema$segment_summary)
+
+```
+## Visualizing the results
+We can visualize the results as follows
+
+```{r}
+
+lextrema_plot <- lextremagam::plot_lextrema(quant_segments = lextrema,  plot_deriv = TRUE, show_segs = c("peak", "trough"))
+lextrema_plot
+
+#does it include the true values?
+lextrema_plot+geom_point(data=data.frame(x=c(49, 79, 154),
+                                         y=c(21.8, 8.2, 46.8),
+                                         feature = c("peak", "trough", "peak")), 
+                         aes(x=x, y=y, colour=feature))
+
+
+# #gratia:: draw shifts it down by the intercept
+# gratia::draw(lextrema$model)
+# 
+# plot_lextrema <- marginaleffects::plot_predictions(lextrema$model,
+#                                                    by=colnames(lextrema$model$model)[2])
+# plot_lextrema+geom_line(data=lextrema$model_slopes,
+#                                   aes(x = x, y = predicted, group = seg_id, colour = feature))
+
+# plot_lextrema+geom_line(data=filter(lextrema$model_slopes, 
+#                                        feature == "peak" | feature == "trough"), 
+#                         aes(x = x, 
+#                             y = y),
+#                         colour = feature,
+#                         group = seg_id)
+# 
+# ggplot(data=lextrema$model_slopes)+
+#   geom_line(aes(x=x, y=predicted))+
+#   geom_ribbon(aes(x=x, ymin=predicted_lo, ymax=predicted_hi))
+# 
+# dplyr::filter(lextrema$model_slopes, 
+#                                        feature == "peak" | feature == "trough")
+
+```

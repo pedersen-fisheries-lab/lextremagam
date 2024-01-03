@@ -1,0 +1,279 @@
+---
+title: "S01-generate_sim_data"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{S01-generate_sim_data}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(lextremagam)
+```
+
+# Treatment variables 
+Generating the treatment variables.
+
+Predictor (x) range : 0 to 1, by increments of 0.05 (21 unique predictor values)
+Testing the effect of sample size (n): 21, 42, 63, 84, 105
+
+## Experiment 1: testing the effect of residual error level (signal strength) and sample size on peak detection capacity
+5 different sample sizes, 19 different error levels, and 1000 replicate samples per sample size-error level treatment. Based on a normally distributed curve centered in the range 
+
+```{r }
+x <- seq(0,1,length = 21)
+n <- c(21, 42, 63, 84, 105)
+dup <- c(1, 2, 3, 4, 5)
+rep <- 1000
+
+# Experiment 1 ####
+func <- "norm"
+error <- seq(0.05, 0.95, by=0.05)
+param <-0.5
+
+sim_dat_e1 <- list(n_21 = tidyr::expand_grid(func = func,
+                                             param = param,
+                                             rep = 1:rep,
+                                             dup = 1:dup[1],
+                                             error = error,
+                                             x = x),
+                   n_42 = tidyr::expand_grid(func = func,
+                                             param = param,
+                                             rep = 1:rep,
+                                             dup = 1:dup[2],
+                                             error = error,
+                                             x = x),
+                   n_63 = tidyr::expand_grid(func = func,
+                                             param = param,
+                                             rep = 1:rep,
+                                             dup = 1:dup[3],
+                                             error = error,
+                                             x = x),
+                   n_84 = tidyr::expand_grid(func = func,
+                                             param = param,
+                                             rep = 1:rep,
+                                             dup = 1:dup[4],
+                                             error = error,
+                                             x = x),
+                   n_105 = tidyr::expand_grid(func = func,
+                                             param = param,
+                                             rep = 1:rep,
+                                             dup = 1:dup[5],
+                                             error = error,
+                                             x = x))
+
+
+set.seed(1)
+sim_dat_e1 <- lapply(sim_dat_e1, function(x) {
+  x <- x%>%
+    dplyr::group_by(func, param, error, rep)%>%
+    dplyr::mutate(sample_id = cur_group_id(), 
+                  scenario_id = paste0(func,"_p", param, "_e", error))%>%
+    dplyr::mutate(y_true_unscaled = dnorm(x, mean = param, sd = 4/20))%>%
+    dplyr::mutate(y_true = y_true_unscaled-min(y_true_unscaled))%>%
+    dplyr::mutate(y_true = y_true/max(y_true))%>%
+    dplyr::mutate(y = y_true + rnorm(n = n(),mean = 0, sd = error))%>%
+    dplyr::ungroup()
+
+})
+```
+## Experiment 2: curve shape and sample size on peak detection capacity
+5 different sample sizes, 3 different curve shapes (peak width, peak location and skew), each with 19 levels, and 1000 replicate samples per sample curve shape level treatment.
+
+```{r }
+x <- seq(0,1,length = 21)
+n <- c(21, 42, 63, 84, 105)
+dup <- c(1, 2, 3, 4, 5)
+rep <- 1000
+
+# Experiment 2 ####
+error <- 0.3 ######TO BE CHANGED
+param <- seq(0.05, .95, by= .05)
+
+func <- c("var-p-location", "var-p-skew", "var-p-width")
+
+sim_dat_e2 <- list(n_21 = tidyr::expand_grid(func = func,
+                                             param = param,
+                                             rep = 1:rep,
+                                             dup = 1:dup[1],
+                                             error = error,
+                                             x = x),
+                   n_42 = tidyr::expand_grid(func = func,
+                                             param = param,
+                                             rep = 1:rep,
+                                             dup = 1:dup[2],
+                                             error = error,
+                                             x = x),
+                   n_63 = tidyr::expand_grid(func = func,
+                                             param = param,
+                                             rep = 1:rep,
+                                             dup = 1:dup[3],
+                                             error = error,
+                                             x = x),
+                   n_84 = tidyr::expand_grid(func = func,
+                                             param = param,
+                                             rep = 1:rep,
+                                             dup = 1:dup[4],
+                                             error = error,
+                                             x = x),
+                   n_105 = tidyr::expand_grid(func = func,
+                                             param = param,
+                                             rep = 1:rep,
+                                             dup = 1:dup[5],
+                                             error = error,
+                                             x = x))
+
+
+set.seed(2)
+sim_dat_e2 <- lapply(sim_dat_e2, function(x) {
+  x <- x%>%
+    dplyr::group_by(func, param, error, rep)%>%
+    dplyr::mutate(sample_id = cur_group_id(), 
+                  scenario_id = paste0(func,"_p", param, "_e", error))%>%
+    dplyr::mutate(y_true_unscaled = dplyr::case_when(func=="var-p-location"~10*dnorm(x,mean = param, sd = 4/20),
+                                                      func=="var-p-skew"~dbeta(x, shape1=10*param, shape2=10*(1-param)),
+                                                      func=="var-p-width"~10*dnorm(x,mean=.5,sd = param^2)))%>% #####DOUBLE CHEKC THIS SCALING
+    dplyr::mutate(y_true = y_true_unscaled-min(y_true_unscaled))%>%
+    dplyr::mutate(y_true = y_true/max(y_true))%>%
+    dplyr::mutate(y = y_true + rnorm(n = n(),mean = 0, sd = error))%>%
+    dplyr::ungroup()
+
+})
+
+ggplot(data=filter(sim_dat_e2$n_21, rep==1))+
+  geom_point(aes(x=x, y=y, colour=as.factor(param)))+
+  geom_line(aes(x=x, y=y_true, colour=as.factor(param)))+
+  facet_wrap(~func)
+
+ggplot(data=filter(sim_dat_e2$n_21, rep==1, func=="var-p-width"))+
+  geom_point(aes(x=x, y=y, colour=as.factor(param)))+
+  geom_line(aes(x=x, y=y_true, colour=as.factor(param)))+
+  facet_wrap(~as.factor(param))
+
+
+# reps <- 1000
+#
+# param <- seq(0.05, .95, by= .05)
+#
+# func <- c("var-location", "var-scale", "var-curvature",
+#           "var-p-location", "var-skew", "var-p-width")
+#
+# sim_data <-  tidyr::expand_grid(func = func,
+#                                 param=param,
+#                                 x=x)
+# 
+#
+#
+# sim_data <- dplyr::group_by(sim_data,
+#                             func, param)
+# sim_data <- dplyr::mutate(sim_data,
+#                           y_true_scaled = y_true_unscaled-min(y_true_unscaled))
+# sim_data <- dplyr::mutate(sim_data,
+#                           y_true_scaled = y_true_scaled/max(y_true_scaled))
+# sim_data <- dplyr::ungroup(sim_data,
+#                             func, param)
+```
+
+##Experiment 3: The effect on 
+
+```{r }
+x <- seq(0,1,length = 21)
+n <- c(21, 42, 63, 84, 105)
+dup <- c(1, 2, 3, 4, 5)
+rep <- 1000
+
+# Experiment 3 ####
+error <- 0.3 ######TO BE CHANGED
+param <- seq(0.05, .95, by= .05)
+
+func <- c("var-location", "var-scale", "var-curvature", "saturating")
+
+sim_dat_e3 <- list(n_21 = tidyr::expand_grid(func = func,
+                                             param = param,
+                                             rep = 1:rep,
+                                             dup = 1:dup[1],
+                                             error = error,
+                                             x = x),
+                   n_42 = tidyr::expand_grid(func = func,
+                                             param = param,
+                                             rep = 1:rep,
+                                             dup = 1:dup[2],
+                                             error = error,
+                                             x = x),
+                   n_63 = tidyr::expand_grid(func = func,
+                                             param = param,
+                                             rep = 1:rep,
+                                             dup = 1:dup[3],
+                                             error = error,
+                                             x = x),
+                   n_84 = tidyr::expand_grid(func = func,
+                                             param = param,
+                                             rep = 1:rep,
+                                             dup = 1:dup[4],
+                                             error = error,
+                                             x = x),
+                   n_105 = tidyr::expand_grid(func = func,
+                                             param = param,
+                                             rep = 1:rep,
+                                             dup = 1:dup[5],
+                                             error = error,
+                                             x = x))
+
+
+set.seed(3)
+sim_dat_e3 <- lapply(sim_dat_e3, function(x) {
+  x <- x%>%
+    dplyr::group_by(func, param, error, rep)%>%
+    dplyr::mutate(sample_id = cur_group_id(), 
+                  scenario_id = paste0(func,"_p", param, "_e", error))%>%
+    dplyr::mutate(y_true_unscaled = dplyr::case_when(func=="var-location"~plogis(x, location=param, scale = .1),
+                                                      func=="var-scale"~plogis(x, location=0.5, scale = (param*0.7)^2),
+                                                      func=="var-curvature"~plogis(x, location=.05, scale = (param*0.7)^2),
+                                                     func=="saturating"~11*param*x/(1+(11*param-1)*2*x)))%>% #####DOUBLE CHEKC THIS SCALING
+    dplyr::mutate(y_true = y_true_unscaled-min(y_true_unscaled))%>%
+    dplyr::mutate(y_true = y_true/max(y_true))%>%
+    dplyr::mutate(y = y_true + rnorm(n = n(),mean = 0, sd = error))%>%
+    dplyr::ungroup()
+
+})
+
+ggplot(data=filter(sim_dat_e3$n_21, rep==1))+
+  geom_point(aes(x=x, y=y, colour=as.factor(param)))+
+  geom_line(aes(x=x, y=y_true, colour=as.factor(param)))+
+  facet_wrap(~func)
+
+ggplot(data=filter(sim_dat_e3$n_21, rep==1, func=="var-location"))+
+  geom_point(aes(x=x, y=y, colour=as.factor(param)))+
+  geom_line(aes(x=x, y=y_true, colour=as.factor(param)))+
+  facet_wrap(~as.factor(param))
+
+
+# reps <- 1000
+#
+# param <- seq(0.05, .95, by= .05)
+#
+# func <- c("var-location", "var-scale", "var-curvature",
+#           "var-p-location", "var-skew", "var-p-width")
+#
+# sim_data <-  tidyr::expand_grid(func = func,
+#                                 param=param,
+#                                 x=x)
+# 
+#
+#
+# sim_data <- dplyr::group_by(sim_data,
+#                             func, param)
+# sim_data <- dplyr::mutate(sim_data,
+#                           y_true_scaled = y_true_unscaled-min(y_true_unscaled))
+# sim_data <- dplyr::mutate(sim_data,
+#                           y_true_scaled = y_true_scaled/max(y_true_scaled))
+# sim_data <- dplyr::ungroup(sim_data,
+#                             func, param)
+```
