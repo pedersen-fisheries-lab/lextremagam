@@ -10,7 +10,8 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>", 
+  fig.width = 6
 )
 ```
 
@@ -59,37 +60,16 @@ print(lextrema$segment_summary)
 We can visualize the results as follows
 
 ```{r}
-
 lextrema_plot <- lextremagam::plot_lextrema(quant_segments = lextrema,  plot_deriv = TRUE, show_segs = c("peak", "trough"))
 lextrema_plot
+```
 
+Let's compare these peak and trough confidence intervals to the true peak and trough locations. Looks like the confidence intervals capture the true peak well!
+```{r}
 #does it include the true values?
 lextrema_plot+geom_point(data=data.frame(x=c(49, 79, 154),
                                          y=c(21.8, 8.2, 46.8),
                                          feature = c("peak", "trough", "peak")), 
                          aes(x=x, y=y, colour=feature))
-
-
-# #gratia:: draw shifts it down by the intercept
-# gratia::draw(lextrema$model)
-# 
-# plot_lextrema <- marginaleffects::plot_predictions(lextrema$model,
-#                                                    by=colnames(lextrema$model$model)[2])
-# plot_lextrema+geom_line(data=lextrema$model_slopes,
-#                                   aes(x = x, y = predicted, group = seg_id, colour = feature))
-
-# plot_lextrema+geom_line(data=filter(lextrema$model_slopes, 
-#                                        feature == "peak" | feature == "trough"), 
-#                         aes(x = x, 
-#                             y = y),
-#                         colour = feature,
-#                         group = seg_id)
-# 
-# ggplot(data=lextrema$model_slopes)+
-#   geom_line(aes(x=x, y=predicted))+
-#   geom_ribbon(aes(x=x, ymin=predicted_lo, ymax=predicted_hi))
-# 
-# dplyr::filter(lextrema$model_slopes, 
-#                                        feature == "peak" | feature == "trough")
 
 ```
