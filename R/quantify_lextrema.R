@@ -36,12 +36,12 @@ quantify_lextrema <- function(mod, var = NULL, step_size = NULL, conf_level= 0.9
     #Checking the step-size
     if (is.null(step_size)){
       range <- max(mod$model[2])- min(mod$model[2])
-      unique_x <- nrow(unique(mod$model[2])) - 1
+      unique_x <- nrow(unique(mod$model[2])) - 1 #not quite
 
       avg_inp_step_size <- range/unique_x
 
-      step_size <- avg_inp_step_size/1000
-      warning(paste0("step_size not defined. step_size will be defined as the average x interval between datapoints/1000. Step_size = ", step_size))
+      step_size <- avg_inp_step_size/100
+      warning(paste0("step_size not defined. step_size will be defined as the average x interval between datapoints/100. Step_size = ", step_size))
     }
     if(is.numeric(step_size)){
       if(step_size <= 0){

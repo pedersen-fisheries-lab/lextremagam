@@ -1,13 +1,13 @@
 # two_lines.R
 # Functions to quantify extrema (peaks and troughs)
-# Author: Natalie Dupont
+# Author: Natalie Dupont (code written by Uri Simonshon, and used under a CC-By Attribution 4.0 International license)
 # # Code for functions peaktest_quad, reg2 and peaktest_twolines written by Uri Simonsohn (2018)
-# Source: https://osf.io/wdbmr
+  # Source: https://osf.io/wdbmr
 
-
-#' Fits the two-line regression based on a given break point xc
+#' Runs the two-line regression test based on a given break point xc
 #'
-#' reg2 function from Uri Simonsohn 2018 (https://osf.io/wdbmr)
+#'This function is used to compare the performance of the new proposed gam peak quantification method to the two-lines test proposed by Uri Simonsohn (2017)
+#'This function was written by Uri Simonsohn 2018 (https://osf.io/wdbmr) and is used in the present package under a CC-By Attribution 4.0 International license (https://creativecommons.org/licenses/by/4.0/)
 #'
 #' @param x vector of x-values from the data
 #' @param y vector of y-values from the data
@@ -48,15 +48,16 @@ reg2 <- function(x, y, xc){
   return(res)
 }
 
-#' Detecting the presence of a peak using the two lines test
+#' Runs the two-lines regression test
 #'
-#' function from Uri Simonsohn 2018 (https://osf.io/wdbmr)
+#'This function is used to compare the performance of the new proposed gam peak quantification method to the two-lines test proposed by Uri Simonsohn (2017)
+#'This function was written by Uri Simonsohn 2018 (https://osf.io/wdbmr) and is used in the present package under a CC-By Attribution 4.0 International license (https://creativecommons.org/licenses/by/4.0/)
+#'This function runs the two-lines test using different breakpoint definitions
 #'
 #' @param x vector of x-values (predictor)
 #' @param y vector of y-values (response)
 #'
-#' @returns a slopes object dataframe built by marginaleffects::slopes, including the model rowid, term, estimate, std.error, conf.low, conf.high, y, x
-#' @export peaktest_twolines
+#' @returns res (a vector of 4 boolean 0 or 1 values indicating if a peak was identified for any of the four methods. In order: breakpoint = maximum response value, breakpoint = the median of the flat segment from a gam, breakpoint = median of the flat segemnt readjusted to give more power to the weakest slope, three-lines test)
 peaktest_twolines <- function(x,y) {
   #Syntax:
   #1 Run gam()

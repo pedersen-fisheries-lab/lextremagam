@@ -2,7 +2,7 @@
 % Please edit documentation in R/quad_test.R
 \name{peaktest_quad}
 \alias{peaktest_quad}
-\title{Tests for the presence of a peak using the quadratic test. \strong{\strong{NOT AN APPRORPIATE APPROACH}}}
+\title{Tests for the presence of a peak using the quadratic test.}
 \usage{
 peaktest_quad(x, y)
 }
@@ -12,8 +12,14 @@ peaktest_quad(x, y)
 \item{y}{vector of y-values from the data}
 }
 \value{
-dasf
+u (boolean 0 or 1 indicating if the test detected a peak or not)
 }
 \description{
-function from Uri Simonsohn 2018 (https://osf.io/wdbmr)
+\strong{\strong{THIS IS NOT AN APPRORPIATE APPROACH}}
+}
+\details{
+This function is used to compare the performance of the new proposed gam peak quantification method in comparison to the historically used (and inappropriate) quadratic test
+
+This function was written by Uri Simonsohn 2018 (https://osf.io/wdbmr) and is used in the present package under a CC-By Attribution 4.0 International license (https://creativecommons.org/licenses/by/4.0/)
+The only part of this code that was changed was the name of the function (originally called flood.u).
 }
