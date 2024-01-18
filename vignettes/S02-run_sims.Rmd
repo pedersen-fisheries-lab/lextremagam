@@ -1,0 +1,213 @@
+---
+title: "S02-run_sims"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{S02-run_sims}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(lextremagam)
+library(arrow)
+library(dplyr)
+library(pracma)#for tic toc
+library(foreach) #parallelized for loop
+library(parallel) #to set up cores
+library(doParallel) #to register cores
+library(purrr)#import data to run gams
+
+#set up parallel processing,
+
+#set PP loop to:
+#run gam,
+#run segment finder
+#extract segment_summary (or just peark-trough summary?)
+#extract key gam summary stats (edf, R^2?, AIC) - find a reason for these, if not, no
+#stop parallel processing
+#sort model variables in an organized way
+#save to file (rda?)
+
+
+```
+
+```{r}
+
+peak_detect_parallel <- function(sim_data, logname){ 
+  sim_data <- sim_data
+  #using the user-defined logname to set up a new parallel processing logging file
+  log_file <- paste0("data-raw/sim/analysis_logs/", logname, ".txt")
+  file.create(log_file)
+  
+  start_time <- as.numeric(Sys.time())
+  
+  #Parallel processing using the sim_data passed in the function
+  sim_dat_detect_results_list <- foreach (i = unique(sim_data$sample_id), #iterating for each ID number
+                                          .packages=c('dplyr', 'R.utils','pracma', "mgcv", "lextremagam", "marginaleffects"))%dopar% {
+                                            
+#merges list output into a dataframe, where each iteration output is a row
+                                            
+    cat(paste0(Sys.time(), ",Iteration Start,", "Sample ID,", i,  ",Time since foreach loop start,", as.numeric(Sys.time())-start_time, "\n" ), file=log_file, append=TRUE)
+     # selecting only the test data for iteration i ####
+    test_data <- sim_data%>%
+      filter(sample_id==i)
+    x <- test_data$x
+    y <- test_data$y
+    
+    
+    #quadratic regression ####
+    tic()
+    quad_results <- lextremagam:::peaktest_quad(x=x, y=y)
+    #returns a numerical value u (boolean significance) under the criteria 
+    #"if (!is.na(jn1) & !is.na(jn2)) if (jn1>min(x) & jn1<max(x) & jn2>min(x) & jn2<max(x) & jn1>jn2) u=1
+    #FIGURE OUT HOW TO UNDERSTAND THIS
+    
+    # two_lines (2-1 c)  ####
+    twolines_results <- lextremagam:::peaktest_twolines(x=x, y=y)
+    # returns boolean u significance for 3 different rHood methods and 3lines test
+    #res=c(rmax$u.sig,rmed$u.sig, rprop$u.sig,u.3lines)  
+    #rmax: xc=max(yhat)
+    #rmed: xc=median(yflat)- yflat defined as the range where yhat+1SE>=max(yhat)
+    #rprop: uses robin hood algorithm on the rmed break point to determine a new breakpoint
+    #u.3lines: uses 3-lines method (not sure beyond that...)
+    time_simon <- toc()
+    
+    #returing a vector with all the values in the correct order
+    #func will be added later based on sample ID
+    peaktest_results <- data.frame( sample_id = test_data$sample_id[1], 
+      scenario_id = test_data$scenario_id[1],
+      func = test_data$func[1],
+      param = test_data$param[1],
+      rep = test_data$rep[1],
+      error = test_data$error[1],
+      dup = test_data$dup[1],
+      quad_u = quad_results,     #quad_u
+      rmax_u = twolines_results[1],   #rmax_u
+      rmed_u = twolines_results[2],    #rmed_u
+      rprop_u = twolines_results[3], #rprop_u
+      lines3_u = twolines_results[4]) #lines3_u
+
+        cat(paste0(Sys.time(), 
+                   ",Simonsohn analyses complete,", "Sample ID,", i,  ",Duration of Simon analyses,", time_simon, "\n" ),
+        file=log_file, append=TRUE)
+    
+    #quantify local extrema
+      #fit gam
+      tic()
+      sim_gam <- mgcv::gam(y ~ s(x, bs = "ad", m = 3), 
+                           method = "REML", 
+                           data = test_data)
+      summary_sim_gam <- summary(sim_gam)
+      
+      sim_gam_params <- as.data.frame(cbind(i,
+                              sim_gam$aic, 
+                              sim_gam$converged,
+                              sim_gam$outer.info$iter,
+                              summary_sim_gam$residual.df,
+                              summary_sim_gam$chi.sq,
+                              summary_sim_gam$r.sq,
+                              summary_sim_gam$s.table[[4]],#Smooth p-value
+                              summary_sim_gam$edf,    #edf
+                              summary_sim_gam$dev.expl)) #deviance explained) 
+      names(sim_gam_params) <- c("sample_id", "aic", "converged", "n_iter", "residual_df", "chis_sq", "r_sq_adj", "p_smooth", "edf", "dev_expl")
+    
+      #Finding lextrema
+      lextrema_summary <- quantify_lextrema(mod = sim_gam, 
+                                           var = "x", 
+                                           step_size = 0.0005, 
+                                           conf_level = 0.95) #may be too small (a 100 th)
+      
+      lextrema_summary$segment_summary$sample_id <- i
+      time_lextrema <- toc()
+      
+      cat(paste0(Sys.time(), 
+                 ",lextrema analysis complete,", "Sample ID,", i,  ",Duration of lextrema analysis,", time_lextrema, "\n" ),
+        file=log_file, append=TRUE)
+              
+    results <- list(sample_id = i, 
+                    peaktest_results = peaktest_results,
+                    gam_params = sim_gam_params, 
+                    lextrema_results = lextrema_summary$segment_summary)
+    #returing concatenated analysis results for sample ID=i
+    gc()
+
+    return(results)
+  }
+
+  #rowbinding all peaktest_results
+      peaktest_results_list <- map(sim_dat_detect_results_list, ~ .x$peaktest_results)
+      peaktest_results <- do.call(rbind, peaktest_results_list)
+      
+  #rowbinding all lextrema results
+      lextrema_results_list <- map(sim_dat_detect_results_list, ~ .x$lextrema_results)
+      lextrema_results <- do.call(rbind, lextrema_results_list)
+      
+  #rowbinding all gam parameters
+      gam_params_list <- map(sim_dat_detect_results_list, ~ .x$gam_params)
+      gam_params <- do.call(rbind, gam_params_list)
+      
+  results_list <- list(peaktest_results = peaktest_results,
+                       lextrema_results = lextrema_results,
+                       gam_params = gam_params)
+  
+  #returing results for all samples in sim_data passed through the function
+  return(results_list)
+}
+```
+Experiment 1
+```{r}
+# import data
+setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
+sim_dat_e1 <- read_parquet(file = "data-raw/sim/data/sim_dat_e1.parquet")
+
+#set number of cores
+my.cluster <- makeCluster(detectCores()-2)
+
+#register cores
+registerDoParallel(my.cluster)
+
+#check if it is registered 
+foreach::getDoParRegistered()
+
+#how many workers are available?
+foreach::getDoParWorkers()
+
+# Exporting functions necessary for parallel processing within peaktest_all_prll
+#clusterExport(my.cluster, c("peaktest_scam", "peaktest_quad", "peaktest_twolines", "reg2"))
+tic()
+test_results <- peak_detect_parallel(sim_data = sim_dat_e1, logname = "test_log")
+toc()
+
+parallel::stopCluster(cl = my.cluster)
+
+
+```
+
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
