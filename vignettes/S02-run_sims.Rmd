@@ -164,7 +164,9 @@ peak_detect_parallel <- function(sim_data, logname){
 Experiment 1
 ```{r}
 # import data
-setwd("~/lextremagam/lextremagam")
+#setwd("~/lextremagam/lextremagam")
+setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
+
 sim_dat_e1 <- read_parquet(file = "data-raw/sim/data/sim_dat_e1.parquet")
 test_data <- sim_dat_e1%>% filter(rep<=10)
 
