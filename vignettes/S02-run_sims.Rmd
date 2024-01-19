@@ -182,10 +182,14 @@ foreach::getDoParWorkers()
 # Exporting functions necessary for parallel processing within peaktest_all_prll
 #clusterExport(my.cluster, c("peaktest_scam", "peaktest_quad", "peaktest_twolines", "reg2"))
 tic()
-test_results <- peak_detect_parallel(sim_data = sim_dat_e1, logname = "test_log")
+sim_e1_results <- peak_detect_parallel(sim_data = sim_dat_e1, logname = "test_log")
 toc()
 
 parallel::stopCluster(cl = my.cluster)
+
+write_parquet(sim_e1_results$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e1.parquet")
+write_parquet(sim_e1_results$lextrema_results, sink =  "data-raw/sim/results/lextrema_results_e1.parquet")
+write_parquet(sim_e1_results$gam_params, sink =  "data-raw/sim/results/gam_params_e1.parquet")
 
 
 ```
