@@ -15,9 +15,10 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup}
+library(rlang)
+library(dplyr)
 library(lextremagam)
 library(arrow)
-library(dplyr)
 library(pracma)#for tic toc
 library(foreach) #parallelized for loop
 library(parallel) #to set up cores
@@ -50,7 +51,7 @@ peak_detect_parallel <- function(sim_data, logname){
   
   #Parallel processing using the sim_data passed in the function
   sim_dat_detect_results_list <- foreach (i = unique(sim_data$sample_id), #iterating for each ID number
-                                          .packages=c('dplyr', 'R.utils','pracma', "mgcv", "lextremagam", "marginaleffects"))%dopar% {
+                                          .packages=c('dplyr', 'R.utils','pracma', "mgcv", "lextremagam", "marginaleffects"))%do% {
                                             
 #merges list output into a dataframe, where each iteration output is a row
                                             
@@ -60,6 +61,8 @@ peak_detect_parallel <- function(sim_data, logname){
       filter(sample_id==i)
     x <- test_data$x
     y <- test_data$y
+   cat(paste0(Sys.time(), "Sample ID,", i,  ",Sample size,", nrow(test_data), ",", length(x), ",", length(y), "\n" ), file=log_file, append=TRUE)
+
     
     
     #quadratic regression ####
@@ -101,11 +104,24 @@ peak_detect_parallel <- function(sim_data, logname){
     #quantify local extrema
       #fit gam
       tic()
-      sim_gam <- mgcv::gam(y ~ s(x, bs = "ad", m = 3), 
+              cat(paste0(Sys.time(), 
+                   ", Just before running gam", "\n" ),
+        file=log_file, append=TRUE)
+              
+      sim_gam <- gam(y ~ s(x, bs="ad", m=3), 
                            method = "REML", 
                            data = test_data)
+      
+                    cat(paste0(Sys.time(), 
+                   ",", i, ", Gam ran. Gam object size: ", length(sim_gam), "\n" ),
+        file=log_file, append=TRUE)
+                    
       summary_sim_gam <- summary(sim_gam)
       
+    cat(paste0(Sys.time(), 
+                   ",", i, ", Gam summary ran. Gam object size: ", length(summary_sim_gam), "\n" ),
+        file=log_file, append=TRUE)
+    
       sim_gam_params <- as.data.frame(cbind(i,
                               sim_gam$aic, 
                               sim_gam$converged,
@@ -118,13 +134,26 @@ peak_detect_parallel <- function(sim_data, logname){
                               summary_sim_gam$dev.expl)) #deviance explained) 
       names(sim_gam_params) <- c("sample_id", "aic", "converged", "n_iter", "residual_df", "chis_sq", "r_sq_adj", "p_smooth", "edf", "dev_expl")
     
+          cat(paste0(Sys.time(), 
+                   ",", i, ", Params grouped: number of columns", ncol(sim_gam_params), "\n" ),
+        file=log_file, append=TRUE)
+          
       #Finding lextrema
-      lextrema_summary <- quantify_lextrema(mod = sim_gam, 
+      lextrema_summary <- lextremagam::quantify_lextrema(mod = sim_gam, 
                                            var = "x", 
                                            step_size = 0.0005, 
                                            conf_level = 0.95) #may be too small (a 100 th)
       
+                cat(paste0(Sys.time(), 
+                   ",", i, ", quantify_lextrema_ran", length(lextrema_summary), "\n" ),
+        file=log_file, append=TRUE)
+                
       lextrema_summary$segment_summary$sample_id <- i
+      
+            cat(paste0(Sys.time(), 
+                   ",", i, ", added sample_id ", i , " to lextrema summary.\n" ),
+        file=log_file, append=TRUE)
+            
       time_lextrema <- toc()
       
       cat(paste0(Sys.time(), 
@@ -137,7 +166,7 @@ peak_detect_parallel <- function(sim_data, logname){
                     lextrema_results = lextrema_summary$segment_summary)
     #returing concatenated analysis results for sample ID=i
     gc()
-
+    #saveRDS(results, file = "data-raw/sim/results")
     return(results)
   }
 
@@ -164,37 +193,39 @@ peak_detect_parallel <- function(sim_data, logname){
 Experiment 1
 ```{r}
 # import data
-#setwd("~/lextremagam/lextremagam")
-setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
+setwd("~/lextremagam/lextremagam")
+#setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
 
 sim_dat_e1 <- read_parquet(file = "data-raw/sim/data/sim_dat_e1.parquet")
-test_data <- sim_dat_e1%>% filter(rep<=10)
+#test_data <- sim_dat_e1%>% filter(rep<=10)
 
-#set number of cores
-my.cluster <- makeCluster(detectCores()-2)
+# #set number of cores
+# my.cluster <- makeCluster(8)
+# 
+# #register cores
+# registerDoParallel(my.cluster)
+# 
+# #check if it is registered 
+# foreach::getDoParRegistered()
+# 
+# #how many workers are available?
+# foreach::getDoParWorkers()
+# 
+# # Exporting functions necessary for parallel processing within peaktest_all_prll
+# #clusterExport(my.cluster, c("peaktest_scam", "peaktest_quad", "peaktest_twolines", "reg2"))
+# tic()
+start_e1 <- Sys.time()
+sim_e1_results <- peak_detect_parallel(sim_data = sim_dat_e1, logname = "sim_dat_e1_log")
+#test_results <- peak_detect_parallel(sim_data = test_data, logname = "test_log")
+end_e1 <- Sys.time()
 
-#register cores
-registerDoParallel(my.cluster)
+# toc()
+# 
+# parallel::stopCluster(cl = my.cluster)
 
-#check if it is registered 
-foreach::getDoParRegistered()
-
-#how many workers are available?
-foreach::getDoParWorkers()
-
-# Exporting functions necessary for parallel processing within peaktest_all_prll
-#clusterExport(my.cluster, c("peaktest_scam", "peaktest_quad", "peaktest_twolines", "reg2"))
-tic()
-#sim_e1_results <- peak_detect_parallel(sim_data = sim_dat_e1, logname = "test_log")
-test_results <- peak_detect_parallel(sim_data = test_data, logname = "test_log")
-
-toc()
-
-parallel::stopCluster(cl = my.cluster)
-
-# write_parquet(sim_e1_results$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e1.parquet")
-# write_parquet(sim_e1_results$lextrema_results, sink =  "data-raw/sim/results/lextrema_results_e1.parquet")
-# write_parquet(sim_e1_results$gam_params, sink =  "data-raw/sim/results/gam_params_e1.parquet")
+write_parquet(sim_e1_results$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e1.parquet")
+write_parquet(sim_e1_results$lextrema_results, sink =  "data-raw/sim/results/lextrema_results_e1.parquet")
+write_parquet(sim_e1_results$gam_params, sink =  "data-raw/sim/results/gam_params_e1.parquet")
 
 
 ```
