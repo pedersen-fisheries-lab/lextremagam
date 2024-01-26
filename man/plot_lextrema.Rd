@@ -7,7 +7,7 @@
 plot_lextrema(
   quant_segments,
   plot_deriv = TRUE,
-  show_segs = c("peak", "trough")
+  show_segs = c("local_max", "local_min")
 )
 }
 \arguments{
