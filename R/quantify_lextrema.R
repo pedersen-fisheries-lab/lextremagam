@@ -134,10 +134,10 @@ find_segments <- function(est_slopes, var){
     slope_segments$slope_sign == 0 & slope_segments$lag == -1 & slope_segments$lead == 1 ~ "local_min",
     slope_segments$slope_sign == 0 & slope_segments$lag == 1 & slope_segments$lead == 1 ~ "plateau",
     slope_segments$slope_sign == 0 & slope_segments$lag == -1 & slope_segments$lead == -1 ~ "plateau",
-    slope_segments$slope_sign == 0 & is.na(slope_segments$lag & slope_segments$lead == 1) ~ "boundary_min",
-    slope_segments$slope_sign == 0 & is.na(slope_segments$lag & slope_segments$lead == -1) ~ "boundary_max",
-    slope_segments$slope_sign == 0 & is.na(slope_segments$lead & slope_segments$lag == 1) ~ "boundary_max",
-    slope_segments$slope_sign == 0 & is.na(slope_segments$lead & slope_segments$lag == -1) ~ "boundary_min"
+    slope_segments$slope_sign == 0 & is.na(slope_segments$lag) & slope_segments$lead == 1 ~ "boundary_min",
+    slope_segments$slope_sign == 0 & is.na(slope_segments$lag) & slope_segments$lead == -1 ~ "boundary_max",
+    slope_segments$slope_sign == 0 & is.na(slope_segments$lead) & slope_segments$lag == 1 ~ "boundary_max",
+    slope_segments$slope_sign == 0 & is.na(slope_segments$lead) & slope_segments$lag == -1 ~ "boundary_min"
   )
 
   #rejoining these defining features to the inital slopes dataframe
