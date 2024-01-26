@@ -1,0 +1,49 @@
+---
+title: "S03-analyze_sims"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{S03-analyze_sims}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(lextremagam)
+library(arrow)
+```
+
+```{r}
+setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
+e1_gam_params <- read_parquet("data-raw/sim/results/gam_params_e1.parquet")
+e1_lextrema_results <- read_parquet("data-raw/sim/results/lextrema_results_e1.parquet")
+e1_peaktest_results <- read_parquet("data-raw/sim/results/peaktest_results_e1.parquet")
+
+
+hist(e1_lextrema_results$seg_id)
+#assess proportion of peaks detected via the methods. 
+#assess if lextremagam found a peak
+#assess if lextremagam peak includes true value
+
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
