@@ -2,7 +2,7 @@
 % Please edit documentation in R/two_lines.R
 \name{reg2}
 \alias{reg2}
-\title{Fits the two-line regression based on a given break point xc}
+\title{Runs the two-line regression test based on a given break point xc}
 \usage{
 reg2(x, y, xc)
 }
@@ -17,5 +17,6 @@ reg2(x, y, xc)
 a slopes object dataframe built by marginaleffects::slopes, including the model rowid, term, estimate, std.error, conf.low, conf.high, y, x
 }
 \description{
-reg2 function from Uri Simonsohn 2018 (https://osf.io/wdbmr)
+This function is used to compare the performance of the new proposed gam peak quantification method to the two-lines test proposed by Uri Simonsohn (2017)
+This function was written by Uri Simonsohn 2018 (https://osf.io/wdbmr) and is used in the present package under a CC-By Attribution 4.0 International license (https://creativecommons.org/licenses/by/4.0/)
 }

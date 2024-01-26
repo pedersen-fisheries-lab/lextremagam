@@ -2,7 +2,7 @@
 % Please edit documentation in R/two_lines.R
 \name{peaktest_twolines}
 \alias{peaktest_twolines}
-\title{Detecting the presence of a peak using the two lines test}
+\title{Runs the two-lines regression test}
 \usage{
 peaktest_twolines(x, y)
 }
@@ -12,8 +12,10 @@ peaktest_twolines(x, y)
 \item{y}{vector of y-values (response)}
 }
 \value{
-a slopes object dataframe built by marginaleffects::slopes, including the model rowid, term, estimate, std.error, conf.low, conf.high, y, x
+res (a vector of 4 boolean 0 or 1 values indicating if a peak was identified for any of the four methods. In order: breakpoint = maximum response value, breakpoint = the median of the flat segment from a gam, breakpoint = median of the flat segemnt readjusted to give more power to the weakest slope, three-lines test)
 }
 \description{
-function from Uri Simonsohn 2018 (https://osf.io/wdbmr)
+This function is used to compare the performance of the new proposed gam peak quantification method to the two-lines test proposed by Uri Simonsohn (2017)
+This function was written by Uri Simonsohn 2018 (https://osf.io/wdbmr) and is used in the present package under a CC-By Attribution 4.0 International license (https://creativecommons.org/licenses/by/4.0/)
+This function runs the two-lines test using different breakpoint definitions
 }
