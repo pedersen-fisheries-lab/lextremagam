@@ -11,10 +11,12 @@
 #' @param var predictor variable over which the slope is evaluated
 #' @param step_size the step size at which to evaluate the first derivative
 #' @param conf_level the confidence level (between 0 and 1) at which the confidence interval of the first derivative is estimated
+#' @param deriv_method whether to use gratia's derivatives function or marginaleffects' slopes function
 #'
 #' @returns a slopes object dataframe built by marginaleffects::slopes, including the model rowid, term, estimate, std.error, conf.low, conf.high, y, x
 #' @export quantify_lextrema
-quantify_lextrema <- function(mod, var = NULL, step_size = NULL, conf_level= 0.95){
+quantify_lextrema <- function(mod, var = NULL, step_size = NULL, conf_level= 0.95, deriv_method = c("gratia", "marginaleffects")){
+  deriv_method <- match.arg(deriv_method)
   #Error management
     #general checks
     stopifnot( any(class(mod)=="gam"),
@@ -60,15 +62,28 @@ quantify_lextrema <- function(mod, var = NULL, step_size = NULL, conf_level= 0.9
   names(new_x) <- var
 
   #getting first derivative estimates
-  est_slopes <- marginaleffects::slopes(model = mod,
-                                        newdata = new_x,
-                                        conf_level = conf_level,
-                                        type = "link")
+  if(deriv_method == "marginaleffects"){
+    est_slopes <- marginaleffects::slopes(model = mod,
+                                          newdata = new_x,
+                                          conf_level = conf_level,
+                                          type = "link")
+  } else if (deriv_method == "gratia"){
+    #default returns on link scale
+    est_slopes <- gratia::derivatives(object = mod,
+                                      data = new_x,
+                                      order=1,
+                                      type = "central",
+                                      interval = "confidence",
+                                      level = conf_level)
+  }else{
+    stop("invalid deriv_method. Must be \"gratia\" or \"marginaleffects\".")
+  }
 
   #characterizing the curve segments
-  quant_segments <- find_segments(est_slopes, var)
+  quant_segments <- find_segments(est_slopes, var, deriv_method)
   quant_segments$model <- mod
   quant_segments$var <- var
+  quant_segments$deriv_method <- deriv_method
 
   class(quant_segments) <- c("lextrema", class(quant_segments))
 
@@ -81,24 +96,33 @@ quantify_lextrema <- function(mod, var = NULL, step_size = NULL, conf_level= 0.9
 #' @param var predictor variable name
 #'
 #' @export find_segments
-find_segments <- function(est_slopes, var){
+find_segments <- function(est_slopes, var, deriv_method){
   #Checking that the est_slopes entry includes the necessary variables
-  stopifnot(any(class(est_slopes) == "slopes") | any(class(est_slopes) == "marginaleffects"),
-            "rowid" %in% colnames(est_slopes),
-            ("estimate" %in% colnames(est_slopes)),
-            ("std.error" %in% colnames(est_slopes)),
-            ("conf.low" %in% colnames(est_slopes)),
-            ("conf.high" %in% colnames(est_slopes)))
+  stopifnot(any(class(est_slopes) == "slopes") | any(class(est_slopes) == "marginaleffects" | any(class(est_slopes) == 'derivatives')),
+            ("estimate" %in% colnames(est_slopes) | "derivative" %in% colnames(est_slopes)),
+            ("std.error" %in% colnames(est_slopes)| "se" %in% colnames(est_slopes)),
+            ("conf.low" %in% colnames(est_slopes)| "lower" %in% colnames(est_slopes)),
+            ("conf.high" %in% colnames(est_slopes)| "upper" %in% colnames(est_slopes)))
+
 
   #finding regions where the first derivative confidence interval includes 0
+  if(deriv_method =="marginaleffects"){
   est_slopes$slope_sign <- ifelse(est_slopes$conf.low <0 & est_slopes$conf.high <0,
                                   -1,
                                   ifelse(est_slopes$conf.low <=0 & est_slopes$conf.high >=0,
                                          0, 1))
+  }else if(deriv_method =="gratia"){
+    est_slopes$slope_sign <- ifelse(est_slopes$lower <0 & est_slopes$upper <0,
+                                    -1,
+                                    ifelse(est_slopes$lower <=0 & est_slopes$upper >=0,
+                                           0, 1))
+  }else {
+    stop("deriv_method is invalid")
+  }
   est_slopes$seg_id <- data.table::rleid(est_slopes$slope_sign)
 
 
-  est_slopes <- .eval_segments(est_slopes, var)
+  est_slopes <- .eval_segments(est_slopes, var, deriv_method)
 
 
   return(est_slopes)
@@ -113,9 +137,15 @@ find_segments <- function(est_slopes, var){
 #' @param var predictor variable name
 #'
 #' @returns returns the est_slopes object with an added column defining the sections
-.eval_segments <- function(est_slopes, var){
+.eval_segments <- function(est_slopes, var, deriv_method){
   #renaming predictor value
-  colnames(est_slopes)[which(colnames(est_slopes)==var)] <- "x"
+  if(deriv_method == "marginaleffects"){
+    colnames(est_slopes)[which(colnames(est_slopes)==var)] <- "x"
+  }else if (deriv_method == "gratia"){
+    colnames(est_slopes)[which(colnames(est_slopes)=="data")] <- "x"
+  }else{
+    stop('invalid deriv_method')
+  }
 
   #getting a summary table of slope sign sections
   slope_segments <- dplyr::group_by(est_slopes, seg_id)
