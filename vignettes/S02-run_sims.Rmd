@@ -306,7 +306,7 @@ start_e1 <- Sys.time()
 #sim_e1_results <- peak_detect_parallel(sim_data = sim_dat_e1, logname = "sim_dat_e1_log")
 
 #adding gratia alternative
-sim_e1_results_gratia <- peak_detect_parallel(sim_data = sim_dat_e1, logname = "sim_dat_e1_log")
+sim_e1_results_gratia <- peak_detect_gratia(sim_data = sim_dat_e1, logname = "sim_dat_e1_log")
 
 end_e1 <- Sys.time()
 
