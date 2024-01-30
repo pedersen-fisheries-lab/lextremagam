@@ -286,8 +286,7 @@ peak_detect_gratia <- function(sim_data, logname){
       gam_params_list <- map(sim_dat_detect_results_list, ~ .x$gam_params)
       gam_params <- do.call(rbind, gam_params_list)
       
-  results_list <- list(peaktest_results = peaktest_results,
-                       lextrema_results = lextrema_results,
+  results_list <- list(                       lextrema_results = lextrema_results,
                        gam_params = gam_params)
   
   #returing results for all samples in sim_data passed through the function
@@ -306,7 +305,7 @@ start_e1 <- Sys.time()
 #sim_e1_results <- peak_detect_parallel(sim_data = sim_dat_e1, logname = "sim_dat_e1_log")
 
 #adding gratia alternative
-sim_e1_results_gratia <- peak_detect_gratia(sim_data = sim_dat_e1, logname = "sim_dat_e1_log")
+sim_e1_results_gratia <- peak_detect_gratia(sim_data = sim_dat_e1, logname = "sim_dat_e1_gratia_log")
 
 end_e1 <- Sys.time()
 
@@ -321,45 +320,6 @@ write_parquet(sim_e1_results_gratia$gam_params, sink =  "data-raw/sim/results/ga
 
 ```
 
-```{r}
-# import data
-setwd("~/lextremagam/lextremagam")
-#setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
-
-sim_dat_e1 <- read_parquet(file = "data-raw/sim/data/sim_dat_e1.parquet")
-#test_data <- sim_dat_e1%>% filter(rep<=10)
-
-# #set number of cores
-# my.cluster <- makeCluster(8)
-# 
-# #register cores
-# registerDoParallel(my.cluster)
-# 
-# #check if it is registered 
-# foreach::getDoParRegistered()
-# 
-# #how many workers are available?
-# foreach::getDoParWorkers()
-# 
-# # Exporting functions necessary for parallel processing within peaktest_all_prll
-# #clusterExport(my.cluster, c("peaktest_scam", "peaktest_quad", "peaktest_twolines", "reg2"))
-# tic()
-start_e1 <- Sys.time()
-sim_e1_results <- peak_detect_gratia(sim_data = sim_dat_e1, logname = "sim_dat_e1_gratia_log")
-#test_results <- peak_detect_parallel(sim_data = test_data, logname = "test_log")
-end_e1 <- Sys.time()
-
-# toc()
-# 
-# parallel::stopCluster(cl = my.cluster)
-
-
-write_parquet(sim_e1_results$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e1.parquet")
-write_parquet(sim_e1_results$lextrema_results, sink =  "data-raw/sim/results/lextrema_results_e1.parquet")
-write_parquet(sim_e1_results$gam_params, sink =  "data-raw/sim/results/gam_params_e1.parquet")
-
-
-```
 
 ```{r}
 ```
