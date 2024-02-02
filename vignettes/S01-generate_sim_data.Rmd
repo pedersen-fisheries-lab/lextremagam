@@ -70,7 +70,7 @@ write_parquet(x = sim_dat_e1, "data-raw/sim/data/sim_dat_e1.parquet")
 sim_dat_e1_plot <- ggplot(data=filter(sim_dat_e1, rep==1))+
   geom_point(aes(x=x, y=y, colour=error), size=0.1)+
   geom_smooth(aes(x=x, y=y, colour=error))+
-  facet_wrap(~dup)
+  facet_grid(func~dup)
 sim_dat_e1_plot
 
 
@@ -87,7 +87,7 @@ rep <- 1000
 # Experiment 2 ####
 func <- c("norm", "linear")
 param <- 0.5
-n <- 63
+n <- 42
 dup <- 2
 error <- seq(0.05, 0.95, by=0.05)
 
@@ -99,7 +99,7 @@ sim_dat_e2 <- expand_grid(func = func,
                           x = x)
 
 set.seed(2)
-sim_dat_e2 <- sim_dat_e2 <- sim_dat_e2%>%
+sim_dat_e2 <- sim_dat_e2%>%
   group_by(rep)%>%
   dplyr::group_by(func, param, error, rep)%>%
   dplyr::mutate(sample_id = cur_group_id(), 
@@ -112,10 +112,16 @@ sim_dat_e2 <- sim_dat_e2 <- sim_dat_e2%>%
   dplyr::mutate(y = y_true + rnorm(n = n(),mean = 0, sd = error))%>%
   dplyr::ungroup()
 
+#Export data to parquet
+setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
+write_parquet(x = sim_dat_e2, "data-raw/sim/data/sim_dat_e2.parquet")
+
 
 sim_dat_e2_plot <- ggplot(data=filter(sim_dat_e2, rep==1))+
   geom_point(aes(x=x, y=y, colour=error), size=0.2)+
-  geom_line(aes(x=x, y=y_true))
+  geom_smooth(aes(x=x, y=y, colour=error))+
+  #geom_line(aes(x=x, y=y_true))+
+  facet_grid(func~error)
 sim_dat_e2_plot
 ```
 ## Experiment 3: Effect of curve shape and sample size on peak detection capacity
