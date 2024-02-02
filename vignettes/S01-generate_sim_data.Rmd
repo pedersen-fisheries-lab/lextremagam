@@ -87,8 +87,8 @@ rep <- 1000
 # Experiment 2 ####
 func <- c("norm", "linear")
 param <- 0.5
-n <- 42
-dup <- 2
+n <- 63
+dup <- 3
 error <- seq(0.05, 0.95, by=0.05)
 
 sim_dat_e2 <- expand_grid(func = func,
