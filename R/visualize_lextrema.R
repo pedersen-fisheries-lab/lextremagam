@@ -28,12 +28,13 @@ plot_lextrema <- function(quant_segments, plot_deriv = TRUE, show_segs=c("local_
     show_segs <- feature_codes
   }
 
+  new_x <-  dplyr::select(quant_segments$model_slopes, quant_segments$var)
+
   if(quant_segments$deriv_method == "gratia"){
     colnames(quant_segments$model_slopes)[which(colnames(quant_segments$model_slopes)=="lower")] <- "conf.low"
     colnames(quant_segments$model_slopes)[which(colnames(quant_segments$model_slopes)=="upper")] <- "conf.high"
     colnames(quant_segments$model_slopes)[which(colnames(quant_segments$model_slopes)=="derivative")] <- "estimate"
 
-    new_x <-  dplyr::select(quant_segments$model_slopes, quant_segments$var)
     predicted <- predict.gam(object = quant_segments$model, type = "link", newdata = new_x)
 
     colnames(quant_segments$model_slopes)[which(colnames(quant_segments$model_slopes)=="data")] <- quant_segments$var
@@ -42,7 +43,7 @@ plot_lextrema <- function(quant_segments, plot_deriv = TRUE, show_segs=c("local_
 
   seg_data <- dplyr::filter(quant_segments$model_slopes, feature %in% show_segs|is.na(feature))
 
-  model_plot <- marginaleffects::plot_predictions(quant_segments$model, by=colnames(quant_segments$model$model)[2])
+  model_plot <- marginaleffects::plot_predictions(quant_segments$model, by=quant_segments$var, newdata = new_x)
   model_plot <- model_plot+ggplot2::geom_line(data=seg_data,
                                      ggplot2::aes(x = unlist(dplyr::select(seg_data, quant_segments$var)), y = predicted, group = seg_id, colour = feature),
                                      linewidth = 1.2)+
