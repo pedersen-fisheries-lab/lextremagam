@@ -247,7 +247,7 @@ end_e2 <- Sys.time()
 
 write_parquet(sim_e2_results_m$lextrema_results_me, sink =  "data-raw/sim/results/lextrema_results_me_e2.parquet")
 write_parquet(sim_e2_results_m$lextrema_results_gr, sink =  "data-raw/sim/results/lextrema_results_gr_e2.parquet")
-write_parquet(sim_e2_results_m$gam_params, sink =  "data-raw/sim/results/gam_params_e2")
+write_parquet(sim_e2_results_m$gam_params, sink =  "data-raw/sim/results/gam_params_e2.parquet")
 write_parquet(sim_e2_results_m$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e2.parquet")
 
 ```
