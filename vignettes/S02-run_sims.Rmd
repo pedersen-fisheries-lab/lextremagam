@@ -223,8 +223,8 @@ write_parquet(sim_e1_results$peaktest_results, sink =  "data-raw/sim/results/pea
 ##Experiment 2
 ```{r}
 # import data
-#setwd("~/lextremagam/lextremagam")
-setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
+setwd("~/lextremagam/lextremagam")
+#setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
 
 sim_dat_e2 <- read_parquet(file = "data-raw/sim/data/sim_dat_e2.parquet")
 
@@ -243,7 +243,7 @@ sim_e2_results_m$lextrema_results_gr <- rbind(sim_e2_results$linear$lextrema_res
 sim_e2_results_m$gam_params <- rbind(sim_e2_results$linear$gam_params, sim_e2_results$norm$gam_params)
 sim_e2_results_m$peaktest_results <- rbind(sim_e2_results$linear$peaktest_results, sim_e2_results$norm$peaktest_results)
 
-end_e1 <- Sys.time()
+end_e2 <- Sys.time()
 
 write_parquet(sim_e2_results_m$lextrema_results_me, sink =  "data-raw/sim/results/lextrema_results_me_e2.parquet")
 write_parquet(sim_e2_results_m$lextrema_results_gr, sink =  "data-raw/sim/results/lextrema_results_gr_e2.parquet")
