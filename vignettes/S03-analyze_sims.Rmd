@@ -21,11 +21,186 @@ library(dplyr)
 ```
 
 ```{r}
+get_power <- function(peak_test, lextr_me, lextr_gr, func_type){
+  peak_test_pr <- peak_test%>%
+    filter(func %in% func_type)%>%
+    group_by(scenario_id, func, param, error, dup)%>%
+    summarize(quad = sum(quad_u==1)/n(),
+              rmax = sum(rmax_u==1)/n(),
+              rmed = sum(rmed_u==1)/n(),
+              rprop = sum(rprop_u==1)/n(),
+              lines3 = sum(lines3_u==1)/n())%>%
+    ungroup()
+  
+  lextr_me_pr <-  lextr_me%>%
+    filter(func%in% func_type)%>%
+    group_by(scenario_id, func, param, rep, error, dup, sample_id)%>%
+    summarize(me = any(feature == "local_max"))%>%
+    ungroup()%>%
+    group_by(scenario_id, func, param, error, dup, )%>%
+    summarize(pr_me = sum(me)/n(),
+              n_me=n())%>%
+    ungroup()
+  
+  lextr_gr_pr <-  lextr_gr%>%
+    filter(func%in% func_type)%>%
+    group_by(scenario_id, func, param, rep, error, dup, sample_id)%>%
+    summarize(gr = any(feature == "local_max"))%>%
+    ungroup()%>%
+    group_by(scenario_id, func, param, error, dup, )%>%
+    summarize(pr_gr = sum(gr, na.rm = TRUE)/n(),
+              n_gr=n())%>%
+    ungroup()
+  
+  power <- peak_test_pr%>%
+    left_join( lextr_me_pr, by=c("scenario_id", "func", "param", "error", "dup"))%>%
+    left_join(lextr_gr_pr, by=c("scenario_id", "func", "param", "error", "dup"))
+
+  return(power)
+}
+
+get_fperror <- function(peak_test, lextr_me, lextr_gr, func_type){
+  peak_test_fp <- peak_test%>%
+    filter(func %in% func_type)%>%
+    group_by(scenario_id, func, param, error, dup)%>%
+    summarize(quad = sum(quad_u==1)/n(),
+              rmax = sum(rmax_u==1)/n(),
+              rmed = sum(rmed_u==1)/n(),
+              rprop = sum(rprop_u==1)/n(),
+              lines3 = sum(lines3_u==1)/n())%>%
+    ungroup()
+  
+  lextr_me_fp <-  lextr_me%>%
+    filter(func%in% func_type)%>%
+    group_by(scenario_id, func, param, rep, error, dup, sample_id)%>%
+    summarize(me = any(feature == "local_max"))%>%
+    ungroup()%>%
+    group_by(scenario_id, func, param, error, dup )%>%
+    summarize(pr_me = sum(me)/n(),
+              n_me=n())%>%
+    ungroup()
+  
+  lextr_gr_fp <-  lextr_gr%>%
+    filter(func%in% func_type)%>%
+    group_by(scenario_id, func, param, rep, error, dup, sample_id)%>%
+    summarize(gr = any(feature == "local_max"))%>%
+    ungroup()%>%
+    group_by(scenario_id, func, param, error, dup )%>%
+    summarize(pr_gr = sum(gr, na.rm = TRUE)/n(),
+              n_gr=n())%>%
+    ungroup()
+  
+  fp_error <- peak_test_fp%>%
+    left_join( lextr_me_fp, by=c("scenario_id", "func", "param", "error", "dup"))%>%
+    left_join(lextr_gr_fp, by=c("scenario_id", "func", "param", "error", "dup"))
+
+  return(fp_error)
+}
+get_coverage <- function(lextr_me, lextr_gr, func_type){
+  coverage_me <- lextr_me%>%
+    filter(func %in% func_type)%>%
+    rowwise()%>%
+    mutate(capture = case_when(
+      feature %in% c("local_max", "boundary_max", "notrend") ~ (param>=x_start & param<=x_end),
+      !( feature %in% c("local_max", "boundary_max", "notrend"))~ 0))%>%
+    ungroup()%>%
+    group_by(scenario_id, func, param, error, dup, sample_id)%>%
+    summarize(capture = sum(capture))%>%
+    ungroup()%>%
+    group_by(scenario_id, func, param, error, dup)%>%
+    summarize(coverage_me = sum(capture)/n(),
+              n_me = n())%>%
+    ungroup()
+  
+   coverage_gr <- lextr_gr%>%
+    filter(func %in% func_type)%>%
+    rowwise()%>%
+    mutate(capture = case_when(
+      feature %in% c("local_max", "boundary_max", "notrend") ~ (param>=x_start & param<=x_end),
+      !( feature %in% c("local_max", "boundary_max", "notrend"))~ 0))%>%
+    ungroup()%>%
+    group_by(scenario_id, func, param, error, dup, sample_id)%>%
+    summarize(capture = sum(capture))%>%
+    ungroup()%>%
+    group_by(scenario_id, func, param, error, dup)%>%
+    summarize(coverage_gr = sum(capture)/n(),
+              n_gr = n())%>%
+    ungroup()
+  
+  coverage <- coverage_me%>%
+    left_join( coverage_gr, by=c("scenario_id", "func", "param", "error", "dup"))
+  
+  return(coverage)
+}
+get_precision <- function(lextr_me, lextr_gr, func_type){
+    precision_me <- lextr_me%>%
+    filter(func %in% func_type, feature==c("local_max"))%>%
+    mutate(width= x_end-x_start)%>%
+    group_by(func, param, rep, error, dup, scenario_id, sample_id)%>%
+    summarize(sum_width= sum(width),
+              n_seg = n())%>%
+    ungroup()%>%
+    group_by(func, param, error, dup, scenario_id)%>%
+    summarize(width_avg_me = mean(sum_width),
+              width_sd_me = sd(sum_width),
+              n_2etseg_me = sum(n_seg>=2),
+              n_me=n())%>%
+    ungroup()
+    
+  precision_gr <- lextr_gr%>%
+    filter(func %in% func_type, feature==c("local_max"))%>%
+    mutate(width= x_end-x_start)%>%
+    group_by(func, param, rep, error, dup, scenario_id, sample_id)%>%
+    summarize(sum_width= sum(width),
+              n_seg = n())%>%
+    ungroup()%>%
+    group_by(func, param, error, dup, scenario_id)%>%
+    summarize(width_avg_gr = mean(sum_width),
+              width_sd_gr = sd(sum_width),
+              n_2etseg_gr = sum(n_seg>=2),
+              n_gr=n())%>%
+    ungroup()
+  
+  precision <- left_join(precision_me, precision_gr, by=c("scenario_id", "func", "param", "error", "dup"))
+}
+
+get_weirdos <- function(peak_test, lextr_me, lextr_gr, func_type){
+  # samples with more that one extremeum
+  n_extrem_me <- lextr_me %>%
+    group_by(sample_id)%>%
+    summarize(n_extrem = sum( feature %in% c("local_min", "local_max")))%>%
+    ungroup()%>%
+    filter(n_extrem>=3)%>%
+    mutate(method = "me")
+  
+  n_extrem_gr <- lextr_gr %>%
+    group_by(sample_id)%>%
+    summarize(n_extrem = sum( feature %in% c("local_min", "local_max")))%>%
+    ungroup()%>%
+    filter(n_extrem>=3)%>%
+    mutate(method = "gr")
+  
+  many_extrema <- bind_rows(n_extrem_me, n_extrem_gr)
+  
+  return(many_extrema)
+}
+
+```
+
+
+```{r}
 setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
 e1_gam_params <- read_parquet("data-raw/sim/results/gam_params_e1.parquet")
 
 e1_lextrema_results_me <- read_parquet("data-raw/sim/results/lextrema_results_e1.parquet")
+e1_lextrema_results_me$feature[which(is.na(e1_lextrema_results_me$lag) &
+                                          is.na(e1_lextrema_results_me$lead)&
+                                          e1_lextrema_results_me$x_end >0.999999&
+                                          e1_lextrema_results_me$x_start<0.0000001&
+                                          e1_lextrema_results_me$slope_sign ==0)] <- "notrend"
+
 e1_lextrema_results_gratia <- read_parquet("data-raw/sim/results/lextrema_gratia_results_e1.parquet")
+e1_lextrema_results_gratia$feature[which(is.na(e1_lextrema_results_gratia$feature))] <- "notrend"
 
 e1_peaktest_results <- read_parquet("data-raw/sim/results/peaktest_results_e1.parquet")
 
