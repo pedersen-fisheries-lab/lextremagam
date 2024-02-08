@@ -155,8 +155,7 @@ sim_dat_e3 <- sim_dat_e3%>%
   dplyr::mutate(y_true_unscaled = case_when(
     func=="var-p-location"~10*dnorm(x, mean = param, sd = 4/20),
     func=="var-p-skew"~dbeta(x, shape1=10*param, shape2=10*(1-param)),
-    func=="var-p-width"~(param/(2*1*(1/(param*10)))*exp(-((abs(pred-0.5)/1)^(param*10)))))) %>%
-  #10*dnorm(x,mean=.5,sd = param^2)))%>% #####DOUBLE CHEKC THIS SCALING
+    func=="var-p-width"~(param/(2*1*(1/(param*10)))*exp(-((abs(x-0.5)/1)^(param*10)))))) %>%
   dplyr::mutate(y_true = y_true_unscaled-min(y_true_unscaled))%>%
   dplyr::mutate(y_true = y_true/max(y_true))%>%
   dplyr::mutate(y = y_true + rnorm(n = n(),mean = 0, sd = error))%>%
@@ -173,33 +172,6 @@ ggplot(data=filter(sim_dat_e3, rep==1, func=="var-p-width"))+
   #facet_wrap(~as.factor(param))
 
 
-# 
-# 
-# b <- param*10-0.4
-# 
-# test_gen <- expand_grid(a = a, 
-#                         mu = mu,
-#                         b = b,
-#                         pred = pred)%>%
-#   mutate(resp=b/(2*a*(1/b))*exp(-((abs(pred-mu)/a)^b)))%>%
-#   group_by(a, mu, b)%>%
-#   mutate(resp = resp-min(resp))%>%
-#   mutate(resp = resp/max(resp))%>%
-#     ungroup()
-# 
-# ggplot(data=test_gen)+
-#   geom_line(aes(x = pred, y= resp, colour = as.factor(b)))
-# 
-# b <- 2^(param*2)
-# a <- 1
-# mu <- .5
-# pred <- seq(0,1,length = 21)
-# for (b in b){
-#   resp <- b/(2*a*(1/b))*exp(-((abs(pred-mu)/a)^b)) 
-#   resp <- resp-min(resp)
-#   resp <- resp/(max(resp))
-#   plot(resp~pred)
-# }
 ```
 
 ##Experiment 4: The effect of curve shape but for non-peaked curves 
@@ -208,7 +180,7 @@ ggplot(data=filter(sim_dat_e3, rep==1, func=="var-p-width"))+
 x <- seq(0,1,length = 21)
 n <- c(21, 42, 63, 84, 105)
 dup <- c(1, 2, 3, 4, 5)
-rep <- 1
+rep <- 1000
 
 # Experiment 4 ####
 error <- 0.7 ######TO BE CHANGED
@@ -236,15 +208,21 @@ sim_dat_e4 <- sim_dat_e4%>%
   dplyr::mutate(y_true = y_true/max(y_true))%>%
   dplyr::mutate(y = y_true + rnorm(n = n(),mean = 0, sd = error))%>%
   dplyr::ungroup()%>%
-  dplyr::filter(func=="var-scale" & param %in% c(.6, .65, .7, .75, .8, .85, .9, .95))
+  dplyr::filter((func=="var-scale" & (param <=0.66 &param>0.19 |param>0.91))|
+                  (func=="var-curvature"& (param>0.19 & param<=0.81 | param>0.91))|
+                  func == "var-location")
+
+# setwd("~/Documents/Pedersen2023/Peaks/lextremagam/data-raw/sim/data")
+# write_parquet(x = sim_dat_e1, "data-raw/sim/data/sim_dat_e4.parquet")
+
 
 ggplot(data=filter(sim_dat_e4, rep==1))+
-  #ggeom_point(aes(x=x, y=y, colour=as.factor(param)))+
+ # geom_point(aes(x=x, y=y, colour=as.factor(param)))+
   geom_line(aes(x=x, y=y_true, colour=as.factor(param)))+
   facet_wrap(~func)
 
-ggplot(data=filter(sim_dat_e4, rep==1, func=="var-location"))+
- # geom_point(aes(x=x, y=y, colour=as.factor(param)))+
+ggplot(data=filter(sim_dat_e4, rep==1, dup==1, func=="var-location"))+
+  geom_point(aes(x=x, y=y, colour=as.factor(param)))+
   geom_line(aes(x=x, y=y_true, colour=as.factor(param)))+
   facet_wrap(~as.factor(param))
 ```
