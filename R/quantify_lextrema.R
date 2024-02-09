@@ -58,7 +58,7 @@ quantify_lextrema <- function(mod, var = NULL, step_size = NULL, conf_level= 0.9
     }
 
   #generating predictor values to evaluate
-  new_x <-  data.frame(x= seq(min(mod$model[2]), max(mod$model[2]), by=step_size))
+   new_x <-  data.frame(x= seq(min(mod$model[2]), max(mod$model[2]), by=step_size))
   names(new_x) <- var
 
   #getting first derivative estimates
@@ -167,7 +167,8 @@ find_segments <- function(est_slopes, var, deriv_method){
     slope_segments$slope_sign == 0 & is.na(slope_segments$lag) & slope_segments$lead == 1 ~ "boundary_min",
     slope_segments$slope_sign == 0 & is.na(slope_segments$lag) & slope_segments$lead == -1 ~ "boundary_max",
     slope_segments$slope_sign == 0 & is.na(slope_segments$lead) & slope_segments$lag == 1 ~ "boundary_max",
-    slope_segments$slope_sign == 0 & is.na(slope_segments$lead) & slope_segments$lag == -1 ~ "boundary_min"
+    slope_segments$slope_sign == 0 & is.na(slope_segments$lead) & slope_segments$lag == -1 ~ "boundary_min",
+    slope_segments$slope_sign == 0 & is.na(slope_segments$lag) & is.na(slope_segments$lead) ~ "notrend"
   )
 
   #rejoining these defining features to the inital slopes dataframe
