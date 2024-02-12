@@ -203,8 +203,8 @@ run_analyses <- function(sim_data, logname){
 ##Experiment 1
 ```{r}
 # import data
-#setwd("~/lextremagam/lextremagam")
-setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
+setwd("~/lextremagam/lextremagam")
+#setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
 
 sim_dat_e1 <- read_parquet(file = "data-raw/sim/data/sim_dat_e1.parquet")
 
