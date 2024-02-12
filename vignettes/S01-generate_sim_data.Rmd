@@ -135,7 +135,7 @@ rep <- 1000
 list_names <- c("n_21", "n_42", "n_63", "n_84", "n_105")
 
 # Experiment 3 ####
-error <- 0.5 ######DOULBE CHECK
+error <- 0.75 ######DOULBE CHECK
 param <- seq(0.05, .95, by= .05)
 
 func <- c("var-p-location", "var-p-skew", "var-p-width")
@@ -149,22 +149,35 @@ sim_dat_e3 <- expand_grid(func = func,
 
 set.seed(3)
 sim_dat_e3 <- sim_dat_e3%>%
+  dplyr::filter(!(func=="var-p-width" & ((param > 0.59 & param < 0.61)|
+                                          ( param > 0.69 & param < 0.76)|
+                                           (param >0.84 & param <0.91 ))))%>%
   dplyr::group_by(func, param, error, rep, dup)%>%
   dplyr::mutate(sample_id = cur_group_id(),
                 scenario_id = paste0(func,"_p", param, "_n", dup, "_e", error))%>%
   dplyr::mutate(y_true_unscaled = case_when(
     func=="var-p-location"~10*dnorm(x, mean = param, sd = 4/20),
     func=="var-p-skew"~dbeta(x, shape1=10*param, shape2=10*(1-param)),
-    func=="var-p-width"~(param/(2*1*(1/(param*10)))*exp(-((abs(x-0.5)/1)^(param*10)))))) %>%
+    func=="var-p-width"~((param^1.5)/(2*1*(1/((param^1.5)*10)))*exp(-((abs(x-0.5)/1)^((param^1.5)*10)))))) %>%
   dplyr::mutate(y_true = y_true_unscaled-min(y_true_unscaled))%>%
   dplyr::mutate(y_true = y_true/max(y_true))%>%
   dplyr::mutate(y = y_true + rnorm(n = n(),mean = 0, sd = error))%>%
   dplyr::ungroup()
 
-ggplot(data=filter(sim_dat_e3, rep==1, dup==1))+
+#Export data to parquet
+setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
+write_parquet(x = sim_dat_e2, "data-raw/sim/data/sim_dat_e3.parquet")
+
+ggplot(data=filter(sim_dat_e3, rep==1))+
   #geom_point(aes(x=x, y=y, colour=as.factor(param)))+
   geom_line(aes(x=x, y=y_true, colour=as.factor(param)))+
   facet_grid(dup~func)
+
+ggplot(data=filter(sim_dat_e3, rep==1, dup==1))+
+  #geom_point(aes(x=x, y=y, colour=as.factor(dup)))+
+  #geom_line(aes(x=x, y=y_true, colour=as.factor(param)))+
+  geom_smooth(aes(x=x, y=y, colour=as.factor(dup)))+
+  facet_grid(param~func)
 
 ggplot(data=filter(sim_dat_e3, rep==1, func=="var-p-width"))+
   #geom_point(aes(x=x, y=y, colour=as.factor(param)))+
