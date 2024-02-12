@@ -216,7 +216,7 @@ end_e1 <- Sys.time()
 
 write_parquet(sim_e1_results$lextrema_results_me, sink =  "data-raw/sim/results/lextrema_results_me_e1.parquet")
 write_parquet(sim_e1_results$lextrema_results_gr, sink =  "data-raw/sim/results/lextrema_results_gr_e1.parquet")
-write_parquet(sim_e1_results$gam_params, sink =  "data-raw/sim/results/gam_params_e1")
+write_parquet(sim_e1_results$gam_params, sink =  "data-raw/sim/results/gam_params_e1.parquet")
 write_parquet(sim_e1_results$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e1.parquet")
 
 ```
@@ -252,8 +252,44 @@ write_parquet(sim_e2_results_m$peaktest_results, sink =  "data-raw/sim/results/p
 
 ```
 
-
+##Experiment 3
 ```{r}
+# import data
+setwd("~/lextremagam/lextremagam")
+#setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
+
+sim_dat_e3 <- read_parquet(file = "data-raw/sim/data/sim_dat_e3.parquet")
+
+start_e3 <- Sys.time()
+sim_e3_results <- list()
+sim_e3_results$var-p-location <- run_analyses(sim_data = filter(sim_dat_e3, func=="var-p-location"), logname = "sim_dat_e3_var-p-location_log")
+sim_e3_results$var-p-skew <- run_analyses(sim_data = filter(sim_dat_e3, func=="var-p-skew"), logname = "sim_dat_e3_var-p-skew_log")
+sim_e3_results$var-p-width <- run_analyses(sim_data = filter(sim_dat_e3, func=="var-p-width"), logname = "sim_dat_e3_var-p-width_log")
+
+# test <- list()
+# test$linear <- run_analyses(sim_data = filter(sim_dat_e2, func=="linear", rep==1), logname = "sim_dat_e2_linear_log")
+# test$norm <- run_analyses(sim_data = filter(sim_dat_e2, func=="norm", rep==1), logname = "sim_dat_e2_norm_log")
+
+sim_e3_results_m <- list()
+sim_e3_results_m$lextrema_results_me <- rbind(sim_e3_results$var-p-location$lextrema_results_me, 
+                                              sim_e3_results$var-p-skew$lextrema_results_me,
+                                              sim_e3_results$var-p-width$lextrema_results_me)
+sim_e3_results_m$lextrema_results_gr <- rbind(sim_e3_results$var-p-location$lextrema_results_gr, 
+                                              sim_e3_results$var-p-skew$lextrema_results_gr,
+                                              sim_e3_results$var-p-width$lextrema_results_gr)
+sim_e3_results_m$gam_params <- rbind(sim_e3_results$var-p-location$gam_params, 
+                                     sim_e3_results$var-p-skew$gam_params,
+                                     sim_e3_results$var-p-width$gam_params)
+sim_e3_results_m$peaktest_results <- rbind(sim_e3_results$var-p-location$peaktest_results, 
+                                           sim_e3_results$var-p-skew$peaktest_results,
+                                           sim_e3_results$var-p-width$peaktest_results)
+
+end_e3 <- Sys.time()
+
+write_parquet(sim_e3_results_m$lextrema_results_me, sink =  "data-raw/sim/results/lextrema_results_me_e3.parquet")
+write_parquet(sim_e3_results_m$lextrema_results_gr, sink =  "data-raw/sim/results/lextrema_results_gr_e3.parquet")
+write_parquet(sim_e3_results_m$gam_params, sink =  "data-raw/sim/results/gam_params_e3.parquet")
+write_parquet(sim_e3_results_m$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e3.parquet")
 ```
 
 ```{r}
