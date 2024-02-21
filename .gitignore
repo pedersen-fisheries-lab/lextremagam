@@ -51,3 +51,6 @@ rsconnect/
 #macOS files
 .DS_Store
 inst/doc
+
+#log files
+data-raw/sim/analysis_logs/
