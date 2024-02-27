@@ -26,8 +26,7 @@ library(marginaleffects)
 library(foreach) #parallelized for loop
 library(parallel) #to set up cores
 library(doParallel) #to register cores
-library(purrr)#import data to run gams
-
+library(purrr )#import data to run gams
 #set up parallel processing,
 
 #set PP loop to:
@@ -55,24 +54,24 @@ run_analyses <- function(sim_data, logname){
   start_time <- as.numeric(Sys.time())
   
   #Parallel processing using the sim_data passed in the function
-  sim_dat_detect_results_list <- foreach (i = unique(sim_data$sample_id), #iterating for each ID number
-                                          .packages=c("rlang",'dplyr', 'lextremagam','pracma', "mgcv", "gratia" , "marginaleffects")
+  sim_dat_detect_results_list <- foreach (i = unique(sim_data$sample_id) #iterating for each ID number
                                           )%dopar% {
-                                            .libPaths("/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2", include.site = FALSE)
+                                            #.packages=c("rlang",'dplyr', 'lextremagam','pracma', "mgcv", "gratia" , "marginaleffects")
+      cat(paste0(Sys.time(), ",Iteration Start,", "Sample ID,", i,  ",Time since foreach loop start,", as.numeric(Sys.time())-start_time, "\n" ), file=log_file, append=TRUE)
 
+  .libPaths("/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2", include.site = FALSE)
 
-                                            # detach("dplyr")
-                                            # library("rlang")
-                                            # library("dplyr")
-                                            # library("lextremagam")
-                                            # library("pracma")
-                                            # library("mgcv")
-                                            # library("gratia")
-                                            # library("marginaleffects")
+  library("rlang", lib.loc = "/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2")
+  library("dplyr", lib.loc = "/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2")
+  library("lextremagam", lib.loc = "/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2")
+  library("pracma", lib.loc = "/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2")
+  library("mgcv", lib.loc = "/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2")
+  library("gratia", lib.loc = "/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2")
+  library("marginaleffects", lib.loc = "/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2")
                                             
 #merges list output into a dataframe, where each iteration output is a row
                                             
-    cat(paste0(Sys.time(), ",Iteration Start,", "Sample ID,", i,  ",Time since foreach loop start,", as.numeric(Sys.time())-start_time, "\n" ), file=log_file, append=TRUE)
+    cat(paste0(Sys.time(), ",Packages loaded,", "Sample ID,", i,  ",Time since foreach loop start,", as.numeric(Sys.time())-start_time, "\n" ), file=log_file, append=TRUE)
      # selecting only the test data for iteration i ####
     test_data <- sim_data%>%
       dplyr::filter(sample_id==i)
@@ -159,12 +158,6 @@ run_analyses <- function(sim_data, logname){
         file=log_file, append=TRUE)
                 
       lextrema_summary_me$segment_summary$sample_id <- i
-            
-      time_lextrema <- toc()
-      
-      cat(paste0(Sys.time(), 
-                 ",lextrema analysis complete,", "Sample ID,", i,  ",Duration of lextrema analysis,", time_lextrema, "\n" ),
-        file=log_file, append=TRUE)
       
       #with gratia
       lextrema_summary_gr <- lextremagam::quantify_lextrema(mod = sim_gam,
@@ -282,29 +275,31 @@ sim_dat_e3 <- read_parquet(file = "data-raw/sim/data/sim_dat_e3.parquet")
 start_e3 <- Sys.time()
 sim_e3_results <- list()
 
- #set number of cores
-      my.cluster <- makeCluster(detectCores()-2)
+#set number of cores
+my.cluster <- makeCluster(detectCores()-2)
 
-    #register cores
-      registerDoParallel(my.cluster)
-      
-    #check if it is registered 
-      foreach::getDoParRegistered()
-      
-    #how many workers are available?
-      foreach::getDoParWorkers()
+#register cores
+registerDoParallel(my.cluster)
+
+#check if it is registered 
+foreach::getDoParRegistered()
+
+#how many workers are available?
+foreach::getDoParWorkers()
       
 sim_e3_results$var_p_location <- run_analyses(sim_data = filter(sim_dat_e3, func=="var-p-location"), logname = "sim_dat_e3_var_p_location_log")
 sim_e3_results$var_p_skew <- run_analyses(sim_data = filter(sim_dat_e3, func=="var-p-skew"), logname = "sim_dat_e3_var_p_skew_log")
 sim_e3_results$var_p_width <- run_analyses(sim_data = filter(sim_dat_e3, func=="var-p-width"), logname = "sim_dat_e3_var_p_width_log")
-
-      #stop parallel processing
-      parallel::stopCluster(cl = my.cluster)
-
+# tic()
+# setwd("~/lextremagam/lextremagam")
 # test <- list()
 # test$var_p_location <- run_analyses(sim_data = filter(sim_dat_e3, func=="var-p-location", rep==1), logname = "test_var_p_location_log")
 # test$var_p_width <- run_analyses(sim_data = filter(sim_dat_e3, func=="var-p-width", rep==1), logname = "test_var_p_width_log")
 # test$var_p_skew <- run_analyses(sim_data = filter(sim_dat_e3, func=="var-p-skew", rep==1), logname = "test_var_p_skew_log")
+# toc()
+
+      #stop parallel processing
+parallel::stopCluster(cl = my.cluster)
 
 sim_e3_results_m <- list()
 sim_e3_results_m$lextrema_results_me <- rbind(sim_e3_results$var_p_location$lextrema_results_me,
@@ -327,8 +322,65 @@ write_parquet(sim_e3_results_m$lextrema_results_gr, sink =  "data-raw/sim/result
 write_parquet(sim_e3_results_m$gam_params, sink =  "data-raw/sim/results/gam_params_e3.parquet")
 write_parquet(sim_e3_results_m$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e3.parquet")
 ```
-
+#Experiment 4
 ```{r}
+.libPaths("/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2", include.site = FALSE)
+
+# import data
+setwd("~/lextremagam/lextremagam")
+#setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
+
+sim_dat_e4 <- read_parquet(file = "data-raw/sim/data/sim_dat_e4.parquet")
+
+start_e4 <- Sys.time()
+sim_e4_results <- list()
+
+#set number of cores
+my.cluster <- makeCluster(detectCores()-2)
+
+#register cores
+registerDoParallel(my.cluster)
+
+#check if it is registered 
+foreach::getDoParRegistered()
+
+#how many workers are available?
+foreach::getDoParWorkers()
+      
+sim_e4_results$var_p_location <- run_analyses(sim_data = filter(sim_dat_e4, func=="var-location"), logname = "sim_dat_e4_var_location_log")
+sim_e4_results$var_scale <- run_analyses(sim_data = filter(sim_dat_e4, func=="var_scale"), logname = "sim_dat_e4_var_scale")
+sim_e4_results$var_curvature<- run_analyses(sim_data = filter(sim_dat_e4, func=="var-curvature"), logname = "sim_dat_e4_var_curvature")
+# tic()
+# setwd("~/lextremagam/lextremagam")
+# test <- list()
+# test$var_location <- run_analyses(sim_data = filter(sim_dat_e4, func=="var-location", rep==1), logname = "test_var_location_log")
+# test$var_scale <- run_analyses(sim_data = filter(sim_dat_e4, func=="var-scale", rep==1), logname = "test_var_scale_log")
+# test$var_curvature <- run_analyses(sim_data = filter(sim_dat_e4, func=="var-curvature", rep==1), logname = "test_var_curvature")
+# toc()
+
+#stop parallel processing
+parallel::stopCluster(cl = my.cluster)
+end_e4 <- Sys.time()
+
+
+sim_e4_results_m <- list()
+sim_e4_results_m$lextrema_results_me <- rbind(sim_e4_results$var_location$lextrema_results_me,
+                                              sim_e4_results$var_scale$lextrema_results_me,
+                                              sim_e4_results$var_curvature$lextrema_results_me)
+sim_e4_results_m$lextrema_results_gr <- rbind(sim_e4_results$var_location$lextrema_results_gr,
+                                              sim_e4_results$var_scale$lextrema_results_gr,
+                                              sim_e4_results$var_curvature$lextrema_results_gr)
+sim_e4_results_m$gam_params <- rbind(sim_e4_results$var_location$gam_params,
+                                     sim_e4_results$var_scale$gam_params,
+                                     sim_e4_results$var_curvature$gam_params)
+sim_e4_results_m$peaktest_results <- rbind(sim_e4_results$var_location$peaktest_results,
+                                           sim_e4_results$var_scale$peaktest_results,
+                                           sim_e4_results$var_curvature$peaktest_results)
+
+write_parquet(sim_e4_results_m$lextrema_results_me, sink =  "data-raw/sim/results/lextrema_results_me_e4.parquet")
+write_parquet(sim_e4_results_m$lextrema_results_gr, sink =  "data-raw/sim/results/lextrema_results_gr_e4.parquet")
+write_parquet(sim_e4_results_m$gam_params, sink =  "data-raw/sim/results/gam_params_e4.parquet")
+write_parquet(sim_e4_results_m$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e4.parquet")
 ```
 
 ```{r}
