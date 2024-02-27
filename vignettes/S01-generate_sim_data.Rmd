@@ -152,6 +152,8 @@ sim_dat_e3 <- sim_dat_e3%>%
   dplyr::filter(!(func=="var-p-width" & ((param > 0.59 & param < 0.61)|
                                           ( param > 0.69 & param < 0.76)|
                                            (param >0.84 & param <0.91 ))))%>%
+  dplyr::filter(!(func=="var-p-skew" & ((param <0.12)|
+                                           ( param > 0.89))))%>%
   dplyr::group_by(func, param, error, rep, dup)%>%
   dplyr::mutate(sample_id = cur_group_id(),
                 scenario_id = paste0(func,"_p", param, "_n", dup, "_e", error))%>%
@@ -166,18 +168,18 @@ sim_dat_e3 <- sim_dat_e3%>%
 
 #Export data to parquet
 setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
-write_parquet(x = sim_dat_e2, "data-raw/sim/data/sim_dat_e3.parquet")
+write_parquet(x = sim_dat_e3, "data-raw/sim/data/sim_dat_e3.parquet")
 
 ggplot(data=filter(sim_dat_e3, rep==1))+
   #geom_point(aes(x=x, y=y, colour=as.factor(param)))+
   geom_line(aes(x=x, y=y_true, colour=as.factor(param)))+
   facet_grid(dup~func)
 
-ggplot(data=filter(sim_dat_e3, rep==1, dup==1))+
-  #geom_point(aes(x=x, y=y, colour=as.factor(dup)))+
-  #geom_line(aes(x=x, y=y_true, colour=as.factor(param)))+
+ggplot(data=filter(sim_dat_e3, rep==1, dup==5, param<0.21&param>0.19))+
+  geom_point(aes(x=x, y=y, colour=as.factor(dup)))+
+  geom_line(aes(x=x, y=y_true, colour=as.factor(param)))+
   geom_smooth(aes(x=x, y=y, colour=as.factor(dup)))+
-  facet_grid(param~func)
+  facet_wrap(~func)
 
 ggplot(data=filter(sim_dat_e3, rep==1, func=="var-p-width"))+
   #geom_point(aes(x=x, y=y, colour=as.factor(param)))+
@@ -193,10 +195,10 @@ ggplot(data=filter(sim_dat_e3, rep==1, func=="var-p-width"))+
 x <- seq(0,1,length = 21)
 n <- c(21, 42, 63, 84, 105)
 dup <- c(1, 2, 3, 4, 5)
-rep <- 1000
+rep <- 1
 
 # Experiment 4 ####
-error <- 0.7 ######TO BE CHANGED
+error <- 0.5 ######TO BE CHANGED
 param <- seq(0.05, .95, by= .05)
 
 func <- c("var-location", "var-scale", "var-curvature")
@@ -210,6 +212,9 @@ sim_dat_e4 <- expand_grid(func = func,
 
 set.seed(4)
 sim_dat_e4 <- sim_dat_e4%>%
+  dplyr::filter((func=="var-scale" & (param <=0.66 &param>0.24 |param>0.91))|
+                  (func=="var-curvature" & (param>0.24 & param<=0.81 | param>0.91))|
+                  func == "var-location")%>%
   dplyr::group_by(func, param, error, rep)%>%
   dplyr::mutate(sample_id = cur_group_id(), 
                 scenario_id = paste0(func,"_p", param, "_n", dup, "_e", error))%>%
@@ -220,10 +225,7 @@ sim_dat_e4 <- sim_dat_e4%>%
   dplyr::mutate(y_true = y_true_unscaled-min(y_true_unscaled))%>%
   dplyr::mutate(y_true = y_true/max(y_true))%>%
   dplyr::mutate(y = y_true + rnorm(n = n(),mean = 0, sd = error))%>%
-  dplyr::ungroup()%>%
-  dplyr::filter((func=="var-scale" & (param <=0.66 &param>0.19 |param>0.91))|
-                  (func=="var-curvature"& (param>0.19 & param<=0.81 | param>0.91))|
-                  func == "var-location")
+  dplyr::ungroup()
 
 # setwd("~/Documents/Pedersen2023/Peaks/lextremagam/data-raw/sim/data")
 # write_parquet(x = sim_dat_e1, "data-raw/sim/data/sim_dat_e4.parquet")
@@ -234,10 +236,11 @@ ggplot(data=filter(sim_dat_e4, rep==1))+
   geom_line(aes(x=x, y=y_true, colour=as.factor(param)))+
   facet_wrap(~func)
 
-ggplot(data=filter(sim_dat_e4, rep==1, dup==1, func=="var-location"))+
+ggplot(data=filter(sim_dat_e4, rep==1, param<0.52&param>0.49, func=="var-location"))+
   geom_point(aes(x=x, y=y, colour=as.factor(param)))+
   geom_line(aes(x=x, y=y_true, colour=as.factor(param)))+
-  facet_wrap(~as.factor(param))
+  geom_smooth(aes(x=x, y=y))+
+  facet_wrap(~dup)
 ```
 
 ```{r }
