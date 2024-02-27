@@ -15,11 +15,14 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup}
+.libPaths("/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2", include.site = FALSE)
 library(rlang)
+library(arrow)
 library(dplyr)
 library(lextremagam)
-library(arrow)
 library(pracma)#for tic toc
+library(gratia)
+library(marginaleffects)
 library(foreach) #parallelized for loop
 library(parallel) #to set up cores
 library(doParallel) #to register cores
@@ -42,6 +45,8 @@ library(purrr)#import data to run gams
 ```{r}
 
 run_analyses <- function(sim_data, logname){ 
+  .libPaths("/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2", include.site = FALSE)
+
   sim_data <- sim_data
   #using the user-defined logname to set up a new parallel processing logging file
   log_file <- paste0("data-raw/sim/analysis_logs/", logname, ".txt")
@@ -51,14 +56,26 @@ run_analyses <- function(sim_data, logname){
   
   #Parallel processing using the sim_data passed in the function
   sim_dat_detect_results_list <- foreach (i = unique(sim_data$sample_id), #iterating for each ID number
-                                          .packages=c('dplyr', 'R.utils','pracma', "mgcv", "lextremagam", "marginaleffects"))%do% {
+                                          .packages=c("rlang",'dplyr', 'lextremagam','pracma', "mgcv", "gratia" , "marginaleffects")
+                                          )%dopar% {
+                                            .libPaths("/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2", include.site = FALSE)
+
+
+                                            # detach("dplyr")
+                                            # library("rlang")
+                                            # library("dplyr")
+                                            # library("lextremagam")
+                                            # library("pracma")
+                                            # library("mgcv")
+                                            # library("gratia")
+                                            # library("marginaleffects")
                                             
 #merges list output into a dataframe, where each iteration output is a row
                                             
     cat(paste0(Sys.time(), ",Iteration Start,", "Sample ID,", i,  ",Time since foreach loop start,", as.numeric(Sys.time())-start_time, "\n" ), file=log_file, append=TRUE)
      # selecting only the test data for iteration i ####
     test_data <- sim_data%>%
-      filter(sample_id==i)
+      dplyr::filter(sample_id==i)
     x <- test_data$x
     y <- test_data$y
     
@@ -254,6 +271,8 @@ write_parquet(sim_e2_results_m$peaktest_results, sink =  "data-raw/sim/results/p
 
 ##Experiment 3
 ```{r}
+.libPaths("/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2", include.site = FALSE)
+
 # import data
 setwd("~/lextremagam/lextremagam")
 #setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
@@ -262,27 +281,44 @@ sim_dat_e3 <- read_parquet(file = "data-raw/sim/data/sim_dat_e3.parquet")
 
 start_e3 <- Sys.time()
 sim_e3_results <- list()
-sim_e3_results$var-p-location <- run_analyses(sim_data = filter(sim_dat_e3, func=="var-p-location"), logname = "sim_dat_e3_var-p-location_log")
-sim_e3_results$var-p-skew <- run_analyses(sim_data = filter(sim_dat_e3, func=="var-p-skew"), logname = "sim_dat_e3_var-p-skew_log")
-sim_e3_results$var-p-width <- run_analyses(sim_data = filter(sim_dat_e3, func=="var-p-width"), logname = "sim_dat_e3_var-p-width_log")
+
+ #set number of cores
+      my.cluster <- makeCluster(detectCores()-2)
+
+    #register cores
+      registerDoParallel(my.cluster)
+      
+    #check if it is registered 
+      foreach::getDoParRegistered()
+      
+    #how many workers are available?
+      foreach::getDoParWorkers()
+      
+sim_e3_results$var_p_location <- run_analyses(sim_data = filter(sim_dat_e3, func=="var-p-location"), logname = "sim_dat_e3_var_p_location_log")
+sim_e3_results$var_p_skew <- run_analyses(sim_data = filter(sim_dat_e3, func=="var-p-skew"), logname = "sim_dat_e3_var_p_skew_log")
+sim_e3_results$var_p_width <- run_analyses(sim_data = filter(sim_dat_e3, func=="var-p-width"), logname = "sim_dat_e3_var_p_width_log")
+
+      #stop parallel processing
+      parallel::stopCluster(cl = my.cluster)
 
 # test <- list()
-# test$linear <- run_analyses(sim_data = filter(sim_dat_e2, func=="linear", rep==1), logname = "sim_dat_e2_linear_log")
-# test$norm <- run_analyses(sim_data = filter(sim_dat_e2, func=="norm", rep==1), logname = "sim_dat_e2_norm_log")
+# test$var_p_location <- run_analyses(sim_data = filter(sim_dat_e3, func=="var-p-location", rep==1), logname = "test_var_p_location_log")
+# test$var_p_width <- run_analyses(sim_data = filter(sim_dat_e3, func=="var-p-width", rep==1), logname = "test_var_p_width_log")
+# test$var_p_skew <- run_analyses(sim_data = filter(sim_dat_e3, func=="var-p-skew", rep==1), logname = "test_var_p_skew_log")
 
 sim_e3_results_m <- list()
-sim_e3_results_m$lextrema_results_me <- rbind(sim_e3_results$var-p-location$lextrema_results_me, 
-                                              sim_e3_results$var-p-skew$lextrema_results_me,
-                                              sim_e3_results$var-p-width$lextrema_results_me)
-sim_e3_results_m$lextrema_results_gr <- rbind(sim_e3_results$var-p-location$lextrema_results_gr, 
-                                              sim_e3_results$var-p-skew$lextrema_results_gr,
-                                              sim_e3_results$var-p-width$lextrema_results_gr)
-sim_e3_results_m$gam_params <- rbind(sim_e3_results$var-p-location$gam_params, 
-                                     sim_e3_results$var-p-skew$gam_params,
-                                     sim_e3_results$var-p-width$gam_params)
-sim_e3_results_m$peaktest_results <- rbind(sim_e3_results$var-p-location$peaktest_results, 
-                                           sim_e3_results$var-p-skew$peaktest_results,
-                                           sim_e3_results$var-p-width$peaktest_results)
+sim_e3_results_m$lextrema_results_me <- rbind(sim_e3_results$var_p_location$lextrema_results_me,
+                                              sim_e3_results$var_p_skew$lextrema_results_me,
+                                              sim_e3_results$var_p_width$lextrema_results_me)
+sim_e3_results_m$lextrema_results_gr <- rbind(sim_e3_results$var_p_location$lextrema_results_gr,
+                                              sim_e3_results$var_p_skew$lextrema_results_gr,
+                                              sim_e3_results$var_p_width$lextrema_results_gr)
+sim_e3_results_m$gam_params <- rbind(sim_e3_results$var_p_location$gam_params,
+                                     sim_e3_results$var_p_skew$gam_params,
+                                     sim_e3_results$var_p_width$gam_params)
+sim_e3_results_m$peaktest_results <- rbind(sim_e3_results$var_p_location$peaktest_results,
+                                           sim_e3_results$var_p_skew$peaktest_results,
+                                           sim_e3_results$var_p_width$peaktest_results)
 
 end_e3 <- Sys.time()
 
