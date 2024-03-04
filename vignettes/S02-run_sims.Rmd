@@ -337,7 +337,7 @@ start_e4 <- Sys.time()
 sim_e4_results <- list()
 
 #set number of cores
-my.cluster <- makeCluster(detectCores()-2)
+my.cluster <- makeCluster(10)
 
 #register cores
 registerDoParallel(my.cluster)
