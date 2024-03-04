@@ -43,7 +43,7 @@ library(purrr )#import data to run gams
 
 ```{r}
 
-run_analyses <- function(sim_data, logname){ 
+run_analyses <- function(sim_data, logname, gam_type = "ad", me = TRUE){ 
   .libPaths("/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2", include.site = FALSE)
 
   sim_data <- sim_data
@@ -120,11 +120,16 @@ run_analyses <- function(sim_data, logname){
       tic()
       cat(paste0(Sys.time(),  ", Just before running gam", "\n" ), 
           file=log_file, append=TRUE)
-              
+  
+    if(gam_type == "ad"){  
       sim_gam <- gam(y ~ s(x, bs="ad", m=3), 
                            method = "REML", 
                            data = test_data)
-      
+    }else if (gam_type == "tprs"){
+      sim_gam <- gam(y ~ s(x), 
+                           method = "REML", 
+                           data = test_data)
+    }
                     cat(paste0(Sys.time(), 
                    ",", i, ", Gam ran. Gam object size: ", length(sim_gam), "\n" ),
         file=log_file, append=TRUE)
@@ -148,12 +153,16 @@ run_analyses <- function(sim_data, logname){
           
     #Finding lextrema
       #with marginaleffects
-      # lextrema_summary_me <- lextremagam::quantify_lextrema(mod = sim_gam,
-      #                                      var = "x", 
-      #                                      step_size = 0.0005, 
-      #                                      conf_level = 0.95,
-      #                                      deriv_method = "marginaleffects") 
-     lextrema_summary_me <- NULL
+
+      if (me){
+        lextrema_summary_me <- lextremagam::quantify_lextrema(mod = sim_gam,
+                                             var = "x",
+                                             step_size = 0.0005,
+                                             conf_level = 0.95,
+                                             deriv_method = "marginaleffects")
+      } else {
+        lextrema_summary_me <- NULL
+      }
       
        cat(paste0(Sys.time(),  ",", i, ", quantify_lextrema_ran_me", length(lextrema_summary_me), "\n" ),
         file=log_file, append=TRUE)
@@ -231,6 +240,7 @@ write_parquet(sim_e1_results$gam_params, sink =  "data-raw/sim/results/gam_param
 write_parquet(sim_e1_results$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e1.parquet")
 
 ```
+
 ##Experiment 2
 ```{r}
 # import data
@@ -323,7 +333,8 @@ write_parquet(sim_e3_results_m$lextrema_results_gr, sink =  "data-raw/sim/result
 write_parquet(sim_e3_results_m$gam_params, sink =  "data-raw/sim/results/gam_params_e3.parquet")
 write_parquet(sim_e3_results_m$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e3.parquet")
 ```
-#Experiment 4
+
+##Experiment 4
 ```{r}
 .libPaths("/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2", include.site = FALSE)
 
@@ -348,9 +359,9 @@ foreach::getDoParRegistered()
 #how many workers are available?
 foreach::getDoParWorkers()
       
-sim_e4_results$var_location <- run_analyses(sim_data = filter(sim_dat_e4, func=="var-location"), logname = "sim_dat_e4_var_location_log")
-sim_e4_results$var_scale <- run_analyses(sim_data = filter(sim_dat_e4, func=="var-scale"), logname = "sim_dat_e4_var_scale")
-sim_e4_results$var_curvature<- run_analyses(sim_data = filter(sim_dat_e4, func=="var-curvature"), logname = "sim_dat_e4_var_curvature")
+sim_e4_results$var_location <- run_analyses(sim_data = filter(sim_dat_e4, func=="var-location"), logname = "sim_dat_e4_var_location_log", me=FALSE)
+sim_e4_results$var_scale <- run_analyses(sim_data = filter(sim_dat_e4, func=="var-scale"), logname = "sim_dat_e4_var_scale", me=FALSE)
+sim_e4_results$var_curvature<- run_analyses(sim_data = filter(sim_dat_e4, func=="var-curvature"), logname = "sim_dat_e4_var_curvature", me=FALSE)
 # tic()
 # setwd("~/lextremagam/lextremagam")
 # test <- list()
@@ -383,7 +394,142 @@ write_parquet(sim_e4_results_m$gam_params, sink =  "data-raw/sim/results/gam_par
 write_parquet(sim_e4_results_m$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e4.parquet")
 ```
 
+##Experiment 1-4 default tprs
 ```{r}
+#Setting up ####
+    setwd("~/lextremagam/lextremagam")
+    #setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
+    .libPaths("/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2", include.site = FALSE)
+
+ #set number of cores
+    my.cluster <- makeCluster(detectCores()-2)
+    
+    #register cores
+    registerDoParallel(my.cluster)
+    
+    #check if it is registered 
+    foreach::getDoParRegistered()
+    
+    #how many workers are available?
+    foreach::getDoParWorkers()
+
+#Experiment 1 ####
+    sim_dat_e1 <- read_parquet(file = "data-raw/sim/data/sim_dat_e1.parquet")
+    
+    start_e1 <- Sys.time()
+    sim_e1_results_tprs <- run_analyses(sim_data = sim_dat_e1, logname = "sim_dat_e1_tprs_log", gam_type = "tprs", me = FALSE)
+    end_e1 <- Sys.time()
+    
+    write_parquet(sim_e1_results_tprs$lextrema_results_gr, sink =  "data-raw/sim/results/lextrema_results_gr_e1_tprs.parquet")
+    write_parquet(sim_e1_results_tprs$gam_params, sink =  "data-raw/sim/results/gam_params_e1_tprs.parquet")
+    write_parquet(sim_e1_results_tprs$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e1_tprs.parquet")
+
+#Experiment 2 ####
+    sim_dat_e2 <- read_parquet(file = "data-raw/sim/data/sim_dat_e2.parquet")
+    
+    start_e2 <- Sys.time()
+    
+        #check if it is registered 
+    foreach::getDoParRegistered()
+    
+    #how many workers are available?
+    foreach::getDoParWorkers()
+    
+    sim_e2_results_tprs <- list()
+    sim_e2_results_tprs$linear <- run_analyses(sim_data = filter(sim_dat_e2, func=="linear"), logname = "sim_dat_e2_linear_tprs_log", gam_type = "tprs", me = FALSE)
+    sim_e2_results_tprs$norm <- run_analyses(sim_data = filter(sim_dat_e2, func=="norm"), logname = "sim_dat_e2_norm_tprs_log", gam_type = "tprs", me = FALSE)
+ 
+    sim_e2_results_m_tprs <- list()
+    sim_e2_results_m_tprs$lextrema_results_gr <- rbind(sim_e2_results_tprs$linear$lextrema_results_gr, sim_e2_results_tprs$norm$lextrema_results_gr)
+    sim_e2_results_m_tprs$gam_params <- rbind(sim_e2_results_tprs$linear$gam_params, sim_e2_results_tprs$norm$gam_params)
+    sim_e2_results_m_tprs$peaktest_results <- rbind(sim_e2_results_tprs$linear$peaktest_results, sim_e2_results_tprs$norm$peaktest_results)
+    
+    end_e2 <- Sys.time()
+    
+    write_parquet(sim_e2_results_m_tprs$lextrema_results_gr, sink =  "data-raw/sim/results/lextrema_results_gr_e2_tprs.parquet")
+    write_parquet(sim_e2_results_m_tprs$gam_params, sink =  "data-raw/sim/results/gam_params_e2_tprs.parquet")
+    write_parquet(sim_e2_results_m_tprs$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e2_tprs.parquet")
+    
+#Experiment 3 ####
+    sim_dat_e3 <- read_parquet(file = "data-raw/sim/data/sim_dat_e3.parquet")
+    
+    start_e3 <- Sys.time()
+        #check if it is registered 
+    foreach::getDoParRegistered()
+    
+    #how many workers are available?
+    foreach::getDoParWorkers()
+    
+    sim_e3_results_tprs <- list()
+          
+    sim_e3_results_tprs$var_p_location <- run_analyses(sim_data = filter(sim_dat_e3, func=="var-p-location"), 
+                                                       logname = "sim_dat_e3_var_p_location_tprs_log", 
+                                                       gam_type = "tprs", me = FALSE)
+    sim_e3_results_tprs$var_p_skew <- run_analyses(sim_data = filter(sim_dat_e3, func=="var-p-skew"), 
+                                                   logname = "sim_dat_e3_var_p_skew_tprs_log", 
+                                                   gam_type = "tprs", me = FALSE)
+    sim_e3_results_tprs$var_p_width <- run_analyses(sim_data = filter(sim_dat_e3, func=="var-p-width"),
+                                                    logname = "sim_dat_e3_var_p_width_tprs_log", 
+                                                    gam_type = "tprs", me = FALSE)
+    
+    sim_e3_results_m_tprs <- list()
+    sim_e3_results_m_tprs$lextrema_results_gr <- rbind(sim_e3_results$var_p_location$lextrema_results_gr,
+                                                  sim_e3_results$var_p_skew$lextrema_results_gr,
+                                                  sim_e3_results$var_p_width$lextrema_results_gr)
+    sim_e3_results_m_tprs$gam_params <- rbind(sim_e3_results$var_p_location$gam_params,
+                                         sim_e3_results$var_p_skew$gam_params,
+                                         sim_e3_results$var_p_width$gam_params)
+    sim_e3_results_m_tprs$peaktest_results <- rbind(sim_e3_results$var_p_location$peaktest_results,
+                                               sim_e3_results$var_p_skew$peaktest_results,
+                                               sim_e3_results$var_p_width$peaktest_results)
+    
+    end_e3 <- Sys.time()
+    
+    write_parquet(sim_e3_results_m_tprs$lextrema_results_gr, sink =  "data-raw/sim/results/lextrema_results_gr_e3_tprs.parquet")
+    write_parquet(sim_e3_results_m_tprs$gam_params, sink =  "data-raw/sim/results/gam_params_e3.parquet_tprs")
+    write_parquet(sim_e3_results_m_tprs$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e3_tprs.parquet")
+  
+#Expermient 4 ####
+    sim_dat_e4 <- read_parquet(file = "data-raw/sim/data/sim_dat_e4.parquet")
+    
+    start_e4 <- Sys.time()
+    
+        #check if it is registered 
+    foreach::getDoParRegistered()
+    
+    #how many workers are available?
+    foreach::getDoParWorkers()
+     
+    sim_e4_results_tprs <- list()
+
+    sim_e4_results_tprs$var_location <- run_analyses(sim_data = filter(sim_dat_e4, func=="var-location"), 
+                                                     logname = "sim_dat_e4_var_location_tprs_log", 
+                                                     gam_type = "tprs", me = FALSE)
+    sim_e4_results_tprs$var_scale <- run_analyses(sim_data = filter(sim_dat_e4, func=="var-scale"), 
+                                                  logname = "sim_dat_e4_var_tprs_scale", 
+                                                  gam_type = "tprs", me = FALSE)
+    sim_e4_results_tprs$var_curvature<- run_analyses(sim_data = filter(sim_dat_e4, func=="var-curvature"), 
+                                                     logname = "sim_dat_e4_var_tprs_curvature", 
+                                                     gam_type = "tprs", me = FALSE)
+    
+    end_e4 <- Sys.time()
+    
+    sim_e4_results_m_tprs <- list()
+    sim_e4_results_m_tprs$lextrema_results_gr <- rbind(sim_e4_results$var_location$lextrema_results_gr,
+                                                  sim_e4_results$var_scale$lextrema_results_gr,
+                                                  sim_e4_results$var_curvature$lextrema_results_gr)
+    sim_e4_results_m_tprs$gam_params <- rbind(sim_e4_results$var_location$gam_params,
+                                         sim_e4_results$var_scale$gam_params,
+                                         sim_e4_results$var_curvature$gam_params)
+    sim_e4_results_m_tprs$peaktest_results <- rbind(sim_e4_results$var_location$peaktest_results,
+                                               sim_e4_results$var_scale$peaktest_results,
+                                               sim_e4_results$var_curvature$peaktest_results)
+    write_parquet(sim_e4_results_m_tprs$lextrema_results_gr, sink =  "data-raw/sim/results/lextrema_results_gr_e4_tprs.parquet")
+    write_parquet(sim_e4_results_m_tprs$gam_params, sink =  "data-raw/sim/results/gam_params_e4_tprs.parquet")
+    write_parquet(sim_e4_results_m_tprs$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e4_tprs.parquet")
+    
+#stop parallel processing
+parallel::stopCluster(cl = my.cluster)
 ```
 
 ```{r}

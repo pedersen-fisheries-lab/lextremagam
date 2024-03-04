@@ -382,7 +382,7 @@ e4_summary <- get_results(peak_test = e4_peaktest_results,
 e4_fperror_long <- tidyr::pivot_longer(data=e4_summary$fperror, cols = c("quad", "rprop", "pr_gr"), names_to = "fpe_type", values_to = "fperror")
 
 ggplot(data=e4_fperror_long)+
-  geom_line(aes(x=param, y=fperor, colour=fpe_type))+
+  geom_line(aes(x=param, y=fperror, colour=fpe_type))+
   geom_hline(aes(yintercept = 0.05), colour="firebrick", linetype=2)+
   facet_grid(dup~func)+
   theme_bw()
