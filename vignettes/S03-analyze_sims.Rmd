@@ -348,7 +348,44 @@ plot_e3_5$model_plot+
   geom_line(data=filter(sim_dat_e3, sample_id ==5), aes(x=x, y=y_true))
 ```
 
+#Experiment 4
 ```{r}
+setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
+sim_dat_e4 <- read_parquet("data-raw/sim/data/sim_dat_e4.parquet")
+  #adding reference data
+  ref_metadata_e4 <- sim_dat_e4%>%
+    group_by(func, param, rep, error, dup, scenario_id)%>%
+    summarize(sample_id=first(sample_id))%>%
+    mutate(peak = NA)%>%
+    ungroup()
+
+e4_gam_params <- read_parquet("data-raw/sim/results/gam_params_e4.parquet")
+e4_gam_params <- full_join(ref_metadata_e4, e4_gam_params, by="sample_id")
+
+# e4_lextrema_results_me <- read_parquet("data-raw/sim/results/lextrema_results_me_e4.parquet")
+# e4_lextrema_results_me <- full_join(ref_metadata_e4, e4_lextrema_results_me, by="sample_id")
+
+e4_lextrema_results_gratia <- read_parquet("data-raw/sim/results/lextrema_results_gr_e4.parquet")
+e4_lextrema_results_gratia <- full_join(ref_metadata_e4, e4_lextrema_results_gratia, by="sample_id")
+
+e4_lextrema_results_me <- e4_lextrema_results_gratia
+
+e4_peaktest_results <- read_parquet("data-raw/sim/results/peaktest_results_e4.parquet")
+ 
+e4_summary <- get_results(peak_test = e4_peaktest_results,
+                          lextr_me =e4_lextrema_results_me, 
+                          lextr_gr =  e4_lextrema_results_gratia, 
+                          gam_params = e4_gam_params, 
+                          func_type_p = NULL,
+                          func_type_np = c("var-curvature", "var-location", "var-scale") )
+
+e4_fperror_long <- tidyr::pivot_longer(data=e4_summary$fperror, cols = c("quad", "rprop", "pr_gr"), names_to = "fpe_type", values_to = "fperror")
+
+ggplot(data=e4_fperror_long)+
+  geom_line(aes(x=param, y=fperor, colour=fpe_type))+
+  geom_hline(aes(yintercept = 0.05), colour="firebrick", linetype=2)+
+  facet_grid(dup~func)+
+  theme_bw()
 ```
 
 ```{r}
