@@ -148,11 +148,12 @@ run_analyses <- function(sim_data, logname){
           
     #Finding lextrema
       #with marginaleffects
-      lextrema_summary_me <- lextremagam::quantify_lextrema(mod = sim_gam,
-                                           var = "x", 
-                                           step_size = 0.0005, 
-                                           conf_level = 0.95,
-                                           deriv_method = "marginaleffects") 
+      # lextrema_summary_me <- lextremagam::quantify_lextrema(mod = sim_gam,
+      #                                      var = "x", 
+      #                                      step_size = 0.0005, 
+      #                                      conf_level = 0.95,
+      #                                      deriv_method = "marginaleffects") 
+     lextrema_summary_me <- NULL
       
        cat(paste0(Sys.time(),  ",", i, ", quantify_lextrema_ran_me", length(lextrema_summary_me), "\n" ),
         file=log_file, append=TRUE)
@@ -347,8 +348,8 @@ foreach::getDoParRegistered()
 #how many workers are available?
 foreach::getDoParWorkers()
       
-sim_e4_results$var_p_location <- run_analyses(sim_data = filter(sim_dat_e4, func=="var-location"), logname = "sim_dat_e4_var_location_log")
-sim_e4_results$var_scale <- run_analyses(sim_data = filter(sim_dat_e4, func=="var_scale"), logname = "sim_dat_e4_var_scale")
+sim_e4_results$var_location <- run_analyses(sim_data = filter(sim_dat_e4, func=="var-location"), logname = "sim_dat_e4_var_location_log")
+sim_e4_results$var_scale <- run_analyses(sim_data = filter(sim_dat_e4, func=="var-scale"), logname = "sim_dat_e4_var_scale")
 sim_e4_results$var_curvature<- run_analyses(sim_data = filter(sim_dat_e4, func=="var-curvature"), logname = "sim_dat_e4_var_curvature")
 # tic()
 # setwd("~/lextremagam/lextremagam")
@@ -362,11 +363,10 @@ sim_e4_results$var_curvature<- run_analyses(sim_data = filter(sim_dat_e4, func==
 parallel::stopCluster(cl = my.cluster)
 end_e4 <- Sys.time()
 
-
 sim_e4_results_m <- list()
-sim_e4_results_m$lextrema_results_me <- rbind(sim_e4_results$var_location$lextrema_results_me,
-                                              sim_e4_results$var_scale$lextrema_results_me,
-                                              sim_e4_results$var_curvature$lextrema_results_me)
+# sim_e4_results_m$lextrema_results_me <- rbind(sim_e4_results$var_location$lextrema_results_me,
+#                                               sim_e4_results$var_scale$lextrema_results_me,
+#                                               sim_e4_results$var_curvature$lextrema_results_me)
 sim_e4_results_m$lextrema_results_gr <- rbind(sim_e4_results$var_location$lextrema_results_gr,
                                               sim_e4_results$var_scale$lextrema_results_gr,
                                               sim_e4_results$var_curvature$lextrema_results_gr)
@@ -376,8 +376,8 @@ sim_e4_results_m$gam_params <- rbind(sim_e4_results$var_location$gam_params,
 sim_e4_results_m$peaktest_results <- rbind(sim_e4_results$var_location$peaktest_results,
                                            sim_e4_results$var_scale$peaktest_results,
                                            sim_e4_results$var_curvature$peaktest_results)
-
-write_parquet(sim_e4_results_m$lextrema_results_me, sink =  "data-raw/sim/results/lextrema_results_me_e4.parquet")
+setwd("~/lextremagam/lextremagam")
+#write_parquet(sim_e4_results_m$lextrema_results_me, sink =  "data-raw/sim/results/lextrema_results_me_e4.parquet")
 write_parquet(sim_e4_results_m$lextrema_results_gr, sink =  "data-raw/sim/results/lextrema_results_gr_e4.parquet")
 write_parquet(sim_e4_results_m$gam_params, sink =  "data-raw/sim/results/gam_params_e4.parquet")
 write_parquet(sim_e4_results_m$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e4.parquet")
