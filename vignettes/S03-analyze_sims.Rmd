@@ -390,29 +390,29 @@ ggplot(data=e4_fperror_long)+
 ```{r}
 setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
 
-# sim_dat_e1 <- read_parquet("data-raw/sim/data/sim_dat_e1.parquet")
-#   #adding reference data
-#   ref_metadata_e1 <- sim_dat_e1%>%
-#     group_by(func, param, rep, error, dup, scenario_id)%>%
-#     summarize(sample_id=first(sample_id))%>%
-#     mutate(peak = case_when(func=="norm"~param,
-#                             func == "linear"~NA))%>%
-#     ungroup()
-# 
-# e1_gam_params_tprs <- read_parquet("data-raw/sim/results/gam_params_e1_tprs.parquet")
-# e1_gam_params_tprs <- full_join(ref_metadata_e1, e1_gam_params_tprs, by="sample_id")
-# 
-# e1_lextrema_results_gratia_tprs <- read_parquet("data-raw/sim/results/lextrema_results_gr_e1_tprs.parquet")
-# e1_lextrema_results_gratia_tprs <- full_join(ref_metadata_e1, e1_lextrema_results_gratia_tprs, by="sample_id")
-# 
-# e1_peaktest_results_tprs <- read_parquet("data-raw/sim/results/peaktest_results_e1_tprs.parquet")
-#  
-# e1_summary_tprs <- get_results(peak_test = e1_peaktest_results_tprs,
-#                           lextr_me =e1_lextrema_results_gratia_tprs, 
-#                           lextr_gr =  e1_lextrema_results_gratia_tprs, 
-#                           gam_params = e1_gam_params_tprs, 
-#                           func_type_p = "norm", 
-#                           func_type_np = "linear")
+sim_dat_e1 <- read_parquet("data-raw/sim/data/sim_dat_e1.parquet")
+  #adding reference data
+  ref_metadata_e1 <- sim_dat_e1%>%
+    group_by(func, param, rep, error, dup, scenario_id)%>%
+    summarize(sample_id=first(sample_id))%>%
+    mutate(peak = case_when(func=="norm"~param,
+                            func == "linear"~NA))%>%
+    ungroup()
+
+e1_gam_params_tprs <- read_parquet("data-raw/sim/results/gam_params_e1_tprs.parquet")
+e1_gam_params_tprs <- full_join(ref_metadata_e1, e1_gam_params_tprs, by="sample_id")
+
+e1_lextrema_results_gratia_tprs <- read_parquet("data-raw/sim/results/lextrema_results_gr_e1_tprs.parquet")
+e1_lextrema_results_gratia_tprs <- full_join(ref_metadata_e1, e1_lextrema_results_gratia_tprs, by="sample_id")
+
+e1_peaktest_results_tprs <- read_parquet("data-raw/sim/results/peaktest_results_e1_tprs.parquet")
+
+e1_summary_tprs <- get_results(peak_test = e1_peaktest_results_tprs,
+                          lextr_me =e1_lextrema_results_gratia_tprs,
+                          lextr_gr =  e1_lextrema_results_gratia_tprs,
+                          gam_params = e1_gam_params_tprs,
+                          func_type_p = "norm",
+                          func_type_np = "linear")
 
 sim_dat_e2 <- read_parquet("data-raw/sim/data/sim_dat_e2.parquet")
   #adding reference data
@@ -483,6 +483,107 @@ e4_summary_tprs <- get_results(peak_test = e4_peaktest_results_tprs,
                           lextr_me =e4_lextrema_results_gratia_tprs, 
                           lextr_gr =  e4_lextrema_results_gratia_tprs, 
                           gam_params = e4_gam_params_tprs, 
+                          func_type_p = NULL,
+                          func_type_np = c("var-curvature", "var-location", "var-scale") )
+```
+
+#experiment 1-4 adjalpha default
+```{r}
+setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
+
+sim_dat_e1 <- read_parquet("data-raw/sim/data/sim_dat_e1.parquet")
+  #adding reference data
+  ref_metadata_e1 <- sim_dat_e1%>%
+    group_by(func, param, rep, error, dup, scenario_id)%>%
+    summarize(sample_id=first(sample_id))%>%
+    mutate(peak = case_when(func=="norm"~param,
+                            func == "linear"~NA))%>%
+    ungroup()
+
+e1_gam_params_adjalpha <- read_parquet("data-raw/sim/results/gam_params_e1_adjalpha.parquet")
+e1_gam_params_adjalpha <- full_join(ref_metadata_e1, e1_gam_params_adjalpha, by="sample_id")
+
+e1_lextrema_results_gratia_adjalpha <- read_parquet("data-raw/sim/results/lextrema_results_gr_e1_adjalpha.parquet")
+e1_lextrema_results_gratia_adjalpha <- full_join(ref_metadata_e1, e1_lextrema_results_gratia_adjalpha, by="sample_id")
+
+e1_peaktest_results_adjalpha <- read_parquet("data-raw/sim/results/peaktest_results_e1_adjalpha.parquet")
+
+e1_summary_adjalpha <- get_results(peak_test = e1_peaktest_results_adjalpha,
+                          lextr_me =e1_lextrema_results_gratia_adjalpha,
+                          lextr_gr =  e1_lextrema_results_gratia_adjalpha,
+                          gam_params = e1_gam_params_adjalpha,
+                          func_type_p = "norm",
+                          func_type_np = "linear")
+
+sim_dat_e2 <- read_parquet("data-raw/sim/data/sim_dat_e2.parquet")
+  #adding reference data
+  ref_metadata_e2 <- sim_dat_e2%>%
+    group_by(func, param, rep, error, dup, scenario_id)%>%
+    summarize(sample_id=first(sample_id))%>%
+        mutate(peak = case_when(func=="norm"~param,
+                            func == "linear"~NA))%>%
+    ungroup()
+
+e2_gam_params_adjalpha <- read_parquet("data-raw/sim/results/gam_params_e2_adjalpha.parquet")
+e2_gam_params_adjalpha <- full_join(ref_metadata_e2, e2_gam_params_adjalpha, by="sample_id")
+
+e2_lextrema_results_gratia_adjalpha <- read_parquet("data-raw/sim/results/lextrema_results_gr_e2_adjalpha.parquet")
+e2_lextrema_results_gratia_adjalpha <- full_join(ref_metadata_e2, e2_lextrema_results_gratia_adjalpha, by="sample_id")
+
+e2_peaktest_results_adjalpha <- read_parquet("data-raw/sim/results/peaktest_results_e2_adjalpha.parquet")
+ 
+e2_summary_adjalpha <- get_results(peak_test = e2_peaktest_results_adjalpha,
+                          lextr_me =e2_lextrema_results_gratia_adjalpha, 
+                          lextr_gr =  e2_lextrema_results_gratia_adjalpha, 
+                          gam_params = e2_gam_params_adjalpha, 
+                          func_type_p = "norm", 
+                          func_type_np = "linear")
+
+sim_dat_e3 <- read_parquet("data-raw/sim/data/sim_dat_e3.parquet")
+  #adding reference data
+  ref_metadata_e3 <- sim_dat_e3%>%
+    group_by(func, param, rep, error, dup, scenario_id)%>%
+    summarize(sample_id=first(sample_id))%>%
+    mutate(peak = case_when(func == "var-p-location" ~ param,
+                            func == "var-p-skew" ~ (param*10-1)/(param*10+(10-param*10)-2),
+                            func== "var-p-width" ~ 0.5))%>%
+    ungroup()
+
+e3_gam_params_adjalpha <- read_parquet("data-raw/sim/results/gam_params_e3_adjalpha.parquet")
+e3_gam_params_adjalpha <- full_join(ref_metadata_e3, e3_gam_params_adjalpha, by="sample_id")
+
+e3_lextrema_results_gratia_adjalpha <- read_parquet("data-raw/sim/results/lextrema_results_gr_e3_adjalpha.parquet")
+e3_lextrema_results_gratia_adjalpha <- full_join(ref_metadata_e3, e3_lextrema_results_gratia_adjalpha, by="sample_id")
+
+e3_peaktest_results_adjalpha <- read_parquet("data-raw/sim/results/peaktest_results_e3_adjalpha.parquet")
+ 
+e3_summary_adjalpha <- get_results(peak_test = e3_peaktest_results_adjalpha,
+                          lextr_me =e3_lextrema_results_gratia_adjalpha, 
+                          lextr_gr =  e3_lextrema_results_gratia_adjalpha, 
+                          gam_params = e3_gam_params_adjalpha, 
+                          func_type_p = c("var-p-location", "var-p-skew","var-p-width" ),
+                          func_type_np = NULL)
+
+sim_dat_e4 <- read_parquet("data-raw/sim/data/sim_dat_e4.parquet")
+  #adding reference data
+  ref_metadata_e4 <- sim_dat_e4%>%
+    group_by(func, param, rep, error, dup, scenario_id)%>%
+    summarize(sample_id=first(sample_id))%>%
+    mutate(peak = NA)%>%
+    ungroup()
+
+e4_gam_params_adjalpha <- read_parquet("data-raw/sim/results/gam_params_e4_adjalpha.parquet")
+e4_gam_params_adjalpha <- full_join(ref_metadata_e4, e4_gam_params_adjalpha, by="sample_id")
+
+e4_lextrema_results_gratia_adjalpha <- read_parquet("data-raw/sim/results/lextrema_results_gr_e4_adjalpha.parquet")
+e4_lextrema_results_gratia_adjalpha <- full_join(ref_metadata_e4, e4_lextrema_results_gratia_adjalpha, by="sample_id")
+
+e4_peaktest_results_adjalpha <- read_parquet("data-raw/sim/results/peaktest_results_e4_adjalpha.parquet")
+ 
+e4_summary_adjalpha <- get_results(peak_test = e4_peaktest_results_adjalpha,
+                          lextr_me =e4_lextrema_results_gratia_adjalpha, 
+                          lextr_gr =  e4_lextrema_results_gratia_adjalpha, 
+                          gam_params = e4_gam_params_alpha, 
                           func_type_p = NULL,
                           func_type_np = c("var-curvature", "var-location", "var-scale") )
 ```
