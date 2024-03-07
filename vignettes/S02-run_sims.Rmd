@@ -398,6 +398,22 @@ run_analyses_seq <- function(sim_data, logname, gam_type = "ad", me = TRUE, alph
 }
 ```
 
+##Experiment 1
+```{r}
+# import data
+setwd("~/lextremagam/lextremagam")
+#setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
+sim_dat_e1 <- read_parquet(file = "data-raw/sim/data/sim_dat_e1.parquet")
+start_e1 <- Sys.time()
+sim_e1_results <- run_analyses(sim_data = sim_dat_e1, logname = "sim_dat_e1_log")
+#test <- run_analyses(sim_data = filter(sim_dat_e1, rep<=2), logname = "test")
+end_e1 <- Sys.time()
+write_parquet(sim_e1_results$lextrema_results_me, sink =  "data-raw/sim/results/lextrema_results_me_e1.parquet")
+write_parquet(sim_e1_results$lextrema_results_gr, sink =  "data-raw/sim/results/lextrema_results_gr_e1.parquet")
+write_parquet(sim_e1_results$gam_params, sink =  "data-raw/sim/results/gam_params_e1.parquet")
+write_parquet(sim_e1_results$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e1.parquet")
+```
+
 ##Experiment 2
 ```{r}
 # import data
@@ -429,6 +445,7 @@ write_parquet(sim_e2_results_m$gam_params, sink =  "data-raw/sim/results/gam_par
 write_parquet(sim_e2_results_m$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e2.parquet")
 
 ```
+
 
 ##Experiment 3
 ```{r}
@@ -490,6 +507,7 @@ write_parquet(sim_e3_results_m$lextrema_results_gr, sink =  "data-raw/sim/result
 write_parquet(sim_e3_results_m$gam_params, sink =  "data-raw/sim/results/gam_params_e3.parquet")
 write_parquet(sim_e3_results_m$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e3.parquet")
 ```
+
 
 ##Experiment 4
 ```{r}
@@ -701,7 +719,22 @@ parallel::stopCluster(cl = my.cluster)
     #setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
     .libPaths("/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2", include.site = FALSE)
 
- #set number of cores
+  #Experiment 1 ####
+    sim_dat_e1 <- read_parquet(file = "data-raw/sim/data/sim_dat_e1.parquet")
+
+    setwd("~/lextremagam/lextremagam")
+    start_e1 <- Sys.time()
+    sim_e1_results_adjalpha <- run_analyses_seq(sim_data = sim_dat_e1, logname = "sim_dat_e1_adjalpha_log", 
+                                        gam_type = "tprs", me = FALSE,
+                                        alpha = sqrt(0.05))
+    end_e1 <- Sys.time()
+
+    write_parquet(sim_e1_results_adjalpha$lextrema_results_gr, sink =  "data-raw/sim/results/lextrema_results_gr_e1_adjalpha.parquet")
+    write_parquet(sim_e1_results_adjalpha$gam_params, sink =  "data-raw/sim/results/gam_params_e1_adjalpha.parquet")
+    write_parquet(sim_e1_results_adjalpha$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e1_adjalpha.parquet")
+
+##set up parallel processing ####
+    #set number of cores
     my.cluster <- makeCluster(detectCores()-2)
     
     #register cores
@@ -712,20 +745,6 @@ parallel::stopCluster(cl = my.cluster)
     
     #how many workers are available?
     foreach::getDoParWorkers()
-
-  #Experiment 1 ####
-    sim_dat_e1 <- read_parquet(file = "data-raw/sim/data/sim_dat_e1.parquet")
-
-    setwd("~/lextremagam/lextremagam")
-    start_e1 <- Sys.time()
-    sim_e1_results_adjalpha <- run_analyses(sim_data = sim_dat_e1, logname = "sim_dat_e1_adjalpha_log", 
-                                        gam_type = "tprs", me = FALSE,
-                                        alpha = sqrt(0.05))
-    end_e1 <- Sys.time()
-
-    write_parquet(sim_e1_results_adjalpha$lextrema_results_gr, sink =  "data-raw/sim/results/lextrema_results_gr_e1_adjalpha.parquet")
-    write_parquet(sim_e1_results_adjalpha$gam_params, sink =  "data-raw/sim/results/gam_params_e1_adjalpha.parquet")
-    write_parquet(sim_e1_results_adjalpha$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e1_adjalpha.parquet")
 
 #Experiment 2 ####
     sim_dat_e2 <- read_parquet(file = "data-raw/sim/data/sim_dat_e2.parquet")
@@ -803,6 +822,7 @@ parallel::stopCluster(cl = my.cluster)
   
 #Expermient 4 ####
     sim_dat_e4 <- read_parquet(file = "data-raw/sim/data/sim_dat_e4.parquet")
+
     start_e4 <- Sys.time()
     
         #check if it is registered 
@@ -818,7 +838,7 @@ parallel::stopCluster(cl = my.cluster)
                                                      gam_type = "tprs", me = FALSE,
                                                      alpha = sqrt(0.05))
     sim_e4_results_adjalpha$var_scale <- run_analyses(sim_data = filter(sim_dat_e4, func=="var-scale"), 
-                                                  logname = "sim_dat_e4_var_adjalpha_scale", 
+                                                  logname = "sim_dat_e4_var_scale_adjalpha", 
                                                   gam_type = "tprs", me = FALSE,
                                                   alpha = sqrt(0.05))
     sim_e4_results_adjalpha$var_curvature<- run_analyses(sim_data = filter(sim_dat_e4, func=="var-curvature"), 
