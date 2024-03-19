@@ -446,7 +446,6 @@ write_parquet(sim_e2_results_m$peaktest_results, sink =  "data-raw/sim/results/p
 
 ```
 
-
 ##Experiment 3
 ```{r}
 .libPaths("/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2", include.site = FALSE)
@@ -507,7 +506,6 @@ write_parquet(sim_e3_results_m$lextrema_results_gr, sink =  "data-raw/sim/result
 write_parquet(sim_e3_results_m$gam_params, sink =  "data-raw/sim/results/gam_params_e3.parquet")
 write_parquet(sim_e3_results_m$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e3.parquet")
 ```
-
 
 ##Experiment 4
 ```{r}
@@ -712,7 +710,7 @@ write_parquet(sim_e4_results_m$peaktest_results, sink =  "data-raw/sim/results/p
 parallel::stopCluster(cl = my.cluster)
 ```
 
-##Experiment 1-4 adjusted Pr
+##Experiment 1-4 adjusted Pr tprs
 ```{r}
 #Setting up ####
     setwd("~/lextremagam/lextremagam")
@@ -866,6 +864,162 @@ parallel::stopCluster(cl = my.cluster)
 #stop parallel processing
 parallel::stopCluster(cl = my.cluster)
 ```
+
+##Experiment 1-4 adjusted Pr, ad
+```{r}
+#Setting up ####
+    setwd("~/lextremagam/lextremagam")
+    #setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
+    .libPaths("/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2", include.site = FALSE)
+
+  # #Experiment 1 ####
+  #   sim_dat_e1 <- read_parquet(file = "data-raw/sim/data/sim_dat_e1.parquet")
+  # 
+  #   setwd("~/lextremagam/lextremagam")
+  #   start_e1 <- Sys.time()
+  #   sim_e1_results_adjalpha_ad <- run_analyses_seq(sim_data = sim_dat_e1, logname = "sim_dat_e1_adjalpha_ad_log",
+  #                                       gam_type = "ad", me = FALSE,
+  #                                       alpha = sqrt(0.05))
+  #   end_e1 <- Sys.time()
+  # 
+  #   write_parquet(sim_e1_results_adjalpha_ad$lextrema_results_gr, sink =  "data-raw/sim/results/lextrema_results_gr_e1_adjalpha_ad.parquet")
+  #   write_parquet(sim_e1_results_adjalpha_ad$gam_params, sink =  "data-raw/sim/results/gam_params_e1_adjalpha_ad.parquet")
+  #   write_parquet(sim_e1_results_adjalpha_ad$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e1_adjalpha_ad.parquet")
+
+##set up parallel processing ####
+    #set number of cores
+    my.cluster <- makeCluster(detectCores()-10)
+    
+    #register cores
+    registerDoParallel(my.cluster)
+    
+    #check if it is registered 
+    foreach::getDoParRegistered()
+    
+    #how many workers are available?
+    foreach::getDoParWorkers()
+
+# #Experiment 2 ####
+#     sim_dat_e2 <- read_parquet(file = "data-raw/sim/data/sim_dat_e2.parquet")
+# 
+#     start_e2 <- Sys.time()
+# 
+#         #check if it is registered
+#     foreach::getDoParRegistered()
+# 
+#     #how many workers are available?
+#     foreach::getDoParWorkers()
+# 
+#     sim_e2_results_adjalpha_ad <- list()
+#     sim_e2_results_adjalpha_ad$linear <- run_analyses(sim_data = filter(sim_dat_e2, func=="linear"),
+#                                                logname = "sim_dat_e2_linear_adjalpha_ad_log",
+#                                                gam_type = "ad", me = FALSE,
+#                                                alpha = sqrt(0.05))
+#     sim_e2_results_adjalpha_ad$norm <- run_analyses(sim_data = filter(sim_dat_e2, func=="norm"),
+#                                              logname = "sim_dat_e2_norm_adjalpha_ad_log",
+#                                              gam_type = "ad", me = FALSE,
+#                                              alpha = sqrt(0.05))
+# 
+#     sim_e2_results_m_adjalpha_ad <- list()
+#     sim_e2_results_m_adjalpha_ad$lextrema_results_gr <- rbind(sim_e2_results_adjalpha_ad$linear$lextrema_results_gr, sim_e2_results_adjalpha_ad$norm$lextrema_results_gr)
+#     sim_e2_results_m_adjalpha_ad$gam_params <- rbind(sim_e2_results_adjalpha_ad$linear$gam_params, sim_e2_results_adjalpha_ad$norm$gam_params)
+#     sim_e2_results_m_adjalpha_ad$peaktest_results <- rbind(sim_e2_results_adjalpha_ad$linear$peaktest_results, sim_e2_results_adjalpha_ad$norm$peaktest_results)
+# 
+#     end_e2 <- Sys.time()
+# 
+#     write_parquet(sim_e2_results_m_adjalpha_ad$lextrema_results_gr, sink =  "data-raw/sim/results/lextrema_results_gr_e2_adjalpha_ad.parquet")
+#     write_parquet(sim_e2_results_m_adjalpha_ad$gam_params, sink =  "data-raw/sim/results/gam_params_e2_adjalpha_ad.parquet")
+#     write_parquet(sim_e2_results_m_adjalpha_ad$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e2_adjalpha_ad.parquet")
+# 
+# #Experiment 3 ####
+#     sim_dat_e3 <- read_parquet(file = "data-raw/sim/data/sim_dat_e3.parquet")
+# 
+#     start_e3 <- Sys.time()
+#         #check if it is registered 
+#     foreach::getDoParRegistered()
+#     
+#     #how many workers are available?
+#     foreach::getDoParWorkers()
+#     
+#     sim_e3_results_adjalpha_ad <- list()
+#           
+#     sim_e3_results_adjalpha_ad$var_p_location <- run_analyses(sim_data = filter(sim_dat_e3, func=="var-p-location"), 
+#                                                        logname = "sim_dat_e3_var_p_location_adjalpha_ad_log", 
+#                                                        gam_type = "ad", me = FALSE,
+#                                                        alpha = sqrt(0.05))
+#     sim_e3_results_adjalpha_ad$var_p_skew <- run_analyses(sim_data = filter(sim_dat_e3, func=="var-p-skew"), 
+#                                                    logname = "sim_dat_e3_var_p_skew_adjalpha_ad_log", 
+#                                                    gam_type = "ad", me = FALSE,
+#                                                    alpha = sqrt(0.05))
+#     sim_e3_results_adjalpha_ad$var_p_width <- run_analyses(sim_data = filter(sim_dat_e3, func=="var-p-width"),
+#                                                     logname = "sim_dat_e3_var_p_width_adjalpha_ad_log", 
+#                                                     gam_type = "ad", me = FALSE,
+#                                                     alpha = sqrt(0.05))
+#     
+#     sim_e3_results_m_adjalpha_ad <- list()
+#     sim_e3_results_m_adjalpha_ad$lextrema_results_gr <- rbind(sim_e3_results_adjalpha_ad$var_p_location$lextrema_results_gr,
+#                                                   sim_e3_results_adjalpha_ad$var_p_skew$lextrema_results_gr,
+#                                                   sim_e3_results_adjalpha_ad$var_p_width$lextrema_results_gr)
+#     sim_e3_results_m_adjalpha_ad$gam_params <- rbind(sim_e3_results_adjalpha_ad$var_p_location$gam_params,
+#                                          sim_e3_results_adjalpha_ad$var_p_skew$gam_params,
+#                                          sim_e3_results_adjalpha_ad$var_p_width$gam_params)
+#     sim_e3_results_m_adjalpha_ad$peaktest_results <- rbind(sim_e3_results_adjalpha_ad$var_p_location$peaktest_results,
+#                                                sim_e3_results_adjalpha_ad$var_p_skew$peaktest_results,
+#                                                sim_e3_results_adjalpha_ad$var_p_width$peaktest_results)
+#     
+#     end_e3 <- Sys.time()
+#     
+#     write_parquet(sim_e3_results_m_adjalpha_ad$lextrema_results_gr, sink =  "data-raw/sim/results/lextrema_results_gr_e3_adjalpha_ad.parquet")
+#     write_parquet(sim_e3_results_m_adjalpha_ad$gam_params, sink =  "data-raw/sim/results/gam_params_e3_adjalpha_ad.parquet")
+#     write_parquet(sim_e3_results_m_adjalpha_ad$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e3_adjalpha_ad.parquet")
+  
+#Expermient 4 ####
+    sim_dat_e4 <- read_parquet(file = "data-raw/sim/data/sim_dat_e4.parquet")
+
+    start_e4 <- Sys.time()
+    
+        #check if it is registered 
+    foreach::getDoParRegistered()
+    
+    #how many workers are available?
+    foreach::getDoParWorkers()
+     
+    sim_e4_results_adjalpha_ad <- list()
+    
+    sim_e4_results_adjalpha_ad$var_location <- run_analyses(sim_data = filter(sim_dat_e4, func=="var-location"), 
+                                                     logname = "sim_dat_e4_var_location_adjalpha_ad_log", 
+                                                     gam_type = "ad", me = FALSE,
+                                                     alpha = sqrt(0.05))
+    sim_e4_results_adjalpha_ad$var_scale <- run_analyses(sim_data = filter(sim_dat_e4, func=="var-scale"), 
+                                                  logname = "sim_dat_e4_var_scale_adjalpha_ad", 
+                                                  gam_type = "ad", me = FALSE,
+                                                  alpha = sqrt(0.05))
+    sim_e4_results_adjalpha_ad$var_curvature<- run_analyses(sim_data = filter(sim_dat_e4, func=="var-curvature"), 
+                                                     logname = "sim_dat_e4_var_adjalpha_ad_curvature", 
+                                                     gam_type = "ad", me = FALSE,
+                                                     alpha = sqrt(0.05))
+    
+    end_e4 <- Sys.time()
+    
+    sim_e4_results_m_adjalpha_ad <- list()
+    sim_e4_results_m_adjalpha_ad$lextrema_results_gr <- rbind(sim_e4_results_adjalpha_ad$var_location$lextrema_results_gr,
+                                                  sim_e4_results_adjalpha_ad$var_scale$lextrema_results_gr,
+                                                  sim_e4_results_adjalpha_ad$var_curvature$lextrema_results_gr)
+    sim_e4_results_m_adjalpha_ad$gam_params <- rbind(sim_e4_results_adjalpha_ad$var_location$gam_params,
+                                         sim_e4_results_adjalpha_ad$var_scale$gam_params,
+                                         sim_e4_results$var_curvature$gam_params)
+    sim_e4_results_m_adjalpha_ad$peaktest_results <- rbind(sim_e4_results_adjalpha_ad$var_location$peaktest_results,
+                                               sim_e4_results_adjalpha_ad$var_scale$peaktest_results,
+                                               sim_e4_results_adjalpha_ad$var_curvature$peaktest_results)
+    
+    write_parquet(sim_e4_results_m_adjalpha_ad$lextrema_results_gr, sink =  "data-raw/sim/results/lextrema_results_gr_e4_adjalpha_ad.parquet")
+    write_parquet(sim_e4_results_m_adjalpha_ad$gam_params, sink =  "data-raw/sim/results/gam_params_e4_adjalpha_ad.parquet")
+    write_parquet(sim_e4_results_m_adjalpha_ad$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e4_adjalpha_ad.parquet")
+    
+#stop parallel processing
+parallel::stopCluster(cl = my.cluster)
+```
+
 ```{r}
 ```
 
