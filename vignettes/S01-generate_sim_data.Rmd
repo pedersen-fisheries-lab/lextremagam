@@ -135,7 +135,7 @@ rep <- 1000
 list_names <- c("n_21", "n_42", "n_63", "n_84", "n_105")
 
 # Experiment 3 ####
-error <- 0.75 ######DOULBE CHECK
+error <- 0.5 ######DOULBE CHECK
 param <- seq(0.05, .95, by= .05)
 
 func <- c("var-p-location", "var-p-skew", "var-p-width")
@@ -198,7 +198,7 @@ dup <- c(1, 2, 3, 4, 5)
 rep <- 1000
 
 # Experiment 4 ####
-error <- 0.5 ######TO BE CHANGED
+error <- 0.5
 param <- seq(0.05, .95, by= .05)
 
 func <- c("var-location", "var-scale", "var-curvature")
