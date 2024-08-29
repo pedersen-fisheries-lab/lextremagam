@@ -24,6 +24,10 @@ quantify_lextrema2(
 \item{conf_level}{the confidence level (between 0 and 1) at which the confidence interval of the extrema is to be estimated}
 
 \item{deriv_method}{whether to use gratia's derivatives function or marginaleffects' slopes function}
+
+\item{multivariate}{TRUE/FALSE if the model to be evaluated is multivariate}
+
+\item{smooth}{name of the smooth in the format \"s(...)\"}
 }
 \value{
 a slopes object dataframe built by marginaleffects::slopes, including the model rowid, term, estimate, std.error, conf.low, conf.high, y, x

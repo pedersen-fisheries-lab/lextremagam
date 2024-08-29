@@ -10,6 +10,8 @@ find_segments(est_slopes, var, deriv_method)
 \item{est_slopes}{an output of the marginaleffects::slopes function, including the row ID, the x and y values, the conf.low and conf.high}
 
 \item{var}{predictor variable name}
+
+\item{deriv_method}{gratia or marginaleffects}
 }
 \description{
 Identify the local extremas

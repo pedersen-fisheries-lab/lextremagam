@@ -4,16 +4,16 @@
 \alias{.check_gam}
 \title{Check that gam object}
 \usage{
-.check_gam(mod, var, smooth, mutlivariate)
+.check_gam(mod, var, smooth, multivariate)
 }
 \arguments{
 \item{mod}{gam model object to be evaluated}
 
 \item{var}{predictor variable name}
 
-\item{smooth}{for mutlivariate models, smooth is the smooth term to be evaluated in the format "s(...)"}
+\item{smooth}{for multivariate models, smooth is the smooth term to be evaluated in the format "s(...)"}
 
-\item{mutlivariate}{TRUE/FALSE if the model to be evaluated is multivariate or not}
+\item{multivariate}{TRUE/FALSE if the model to be evaluated is multivariate or not}
 }
 \value{
 returns the est_slopes object with an added column defining the sections

@@ -15,6 +15,10 @@ plot_lextrema(
 \item{quant_segments}{a lextrema object produced by the function quantify_lextrema}
 
 \item{plot_deriv}{boolean TRUE/FALSE if the first derivative should be plotted}
+
+\item{show_segs}{which segment types to show. see lextremagam::feature_codes for the options}
+
+\item{show_segs_deriv}{TRUE/FALSE if the derivative plot should be produced}
 }
 \value{
 a ggplot object

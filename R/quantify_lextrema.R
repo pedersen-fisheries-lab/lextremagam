@@ -45,7 +45,8 @@ quantify_lextrema2 <- function(mod, var = NULL, step_size = NULL, conf_level= 0.
   conf_level_corrected <- 1-sqrt(1-conf_level)
 
   if (multivariate){
-    .quantify_lextrema_mutlivar(mod = mod,
+    .quantify_lextrema_multivar(var=var,
+                                mod = mod,
                                 smooth = smooth,
                                 step_size = step_size,
                                 conf_level= conf_level_corrected,
@@ -71,7 +72,7 @@ quantify_lextrema2 <- function(mod, var = NULL, step_size = NULL, conf_level= 0.
 #' @param deriv_method whether to use gratia's derivatives function or marginaleffects' slopes function
 #'
 #' @returns a list object built by marginaleffects::slopes or gratia::derivative, including the model rowid, term, estimate, std.error, conf.low, conf.high, y, x
-.quantify_lextrema_mutlivar <- function(mod, var=NULL, smooth = NULL, step_size = NULL, conf_level= 0.7763932, deriv_method = c("gratia", "marginaleffects")){
+.quantify_lextrema_multivar <- function(mod, var=NULL, smooth = NULL, step_size = NULL, conf_level= 0.7763932, deriv_method = c("gratia", "marginaleffects")){
 
   deriv_method <- match.arg(deriv_method)
   #Error management
@@ -86,6 +87,10 @@ quantify_lextrema2 <- function(mod, var = NULL, step_size = NULL, conf_level= 0.
     warning("Your mod object does not seem to be a gam. This method has not been tested on non-gam objects and may not operate well")
   }
 
+  if(is.null(var)){
+    var <- substring(smooth, 3, nchar(smooth)-1)
+    warning(paste0("No var is provided. This is very risky. Var extracted from smooth and has been set to \"", var, "\". If this is incorrect, please enter the true var value"))
+  }
   #variable management
   #Checking the step-size
   range <- max(dplyr::select(mod$model, all_of(var)))- min(dplyr::select(mod$model, all_of(var)))
@@ -331,11 +336,11 @@ find_segments <- function(est_slopes, var, deriv_method){
 #'
 #' @param mod gam model object to be evaluated
 #' @param var predictor variable name
-#' @param smooth for mutlivariate models, smooth is the smooth term to be evaluated in the format "s(...)"
-#' @param mutlivariate TRUE/FALSE if the model to be evaluated is multivariate or not
+#' @param smooth for multivariate models, smooth is the smooth term to be evaluated in the format "s(...)"
+#' @param multivariate TRUE/FALSE if the model to be evaluated is multivariate or not
 #'
 #' @returns returns the est_slopes object with an added column defining the sections
-.check_gam <- function(mod, var, smooth, mutlivariate){
+.check_gam <- function(mod, var, smooth, multivariate){
   smooth_names <- gratia::smooths(mod)
 
   if( length(smooth_names)>1 & ! multivariate){
@@ -346,7 +351,7 @@ find_segments <- function(est_slopes, var, deriv_method){
       stop(paste0("If working with a multivariate model, you must specify a smooth in the function. Select one of the following: \n", gratia::smooths(mod)))
     }
     if (!(smooth %in% smooth_names)){
-      stop(paste0("The smooth you has selected is not in the model. Select one of the following: \n", gratia::smooths(mod)))
+      stop(paste0("The smooth you have selected is not in the model. Select one of the following: \n", gratia::smooths(mod)))
     }
 
     smooth_info <- gratia::get_smooth(mod, smooth)

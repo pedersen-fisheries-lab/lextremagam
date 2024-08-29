@@ -10,6 +10,8 @@
 \item{est_slopes}{gam model object to be evaluated}
 
 \item{var}{predictor variable name}
+
+\item{deriv_method}{gratia or marginal effects}
 }
 \value{
 returns the est_slopes object with an added column defining the sections
