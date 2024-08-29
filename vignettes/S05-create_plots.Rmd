@@ -1,0 +1,221 @@
+---
+title: "S05-create_plots"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{S05-create_plots}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(lextremagam)
+library(ggplot2)
+library(dplyr)
+```
+
+#Import all sim data 
+```{r}
+setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
+rds_sim <- list.files("data-raw/sim/analy_results/", full.names = TRUE)
+for (i in rds_sim ){
+    readRDS(i)}
+
+#merging earlier sim tests into a single summary list
+e1_4_summary_ad <- list(e1 = e1_summary, 
+                        e2 = e2_summary, 
+                        e3 = e3_summary, 
+                        e4 = e4_summary)
+saveRDS(e1_4_summary_ad, "data-raw/sim/analy_results/e1_4_summary_adjalpha.RDS")
+```
+
+#Type I error
+```{r}
+plot_fpe <- function(summary, title){
+  #TYPE I ERROR ####
+  e1_fpe <- ggplot(data=tidyr::pivot_longer(summary$e1$fperror, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "fperror"))+
+    geom_point(aes(x=dup, y=fperror, colour=method))+
+    geom_line(aes(x=dup, y=fperror, colour=method))+
+    geom_hline(aes(yintercept=0.05), linetype=2)+
+    labs(title = paste0("Exp 1 FPE,  ", title))
+  
+e2_fpe <- ggplot(data=tidyr::pivot_longer(summary$e2$fperror, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "fperror"))+
+  geom_point(aes(x=error, y=fperror, colour=method))+
+  geom_line(aes(x=error, y=fperror, colour=method))+
+  geom_hline(aes(yintercept=0.05), linetype=2)+
+  labs(title = paste0("Exp 2 FPE,  ", title))
+
+e4_fpe <- ggplot(data=tidyr::pivot_longer(summary$e4$fperror, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "fperror"))+
+  geom_point(aes(x=param, y=fperror, colour=method))+
+  geom_line(aes(x=param, y=fperror, colour=method))+
+  geom_hline(aes(yintercept=0.05), linetype=2)+
+  facet_grid(dup~func)+
+  labs(title = paste0("Exp 4 FPE,  ", title))
+
+return(list(e1_fpe = e1_fpe, e2_fpe = e2_fpe, e4_fpe = e4_fpe))
+}
+
+fpe_adaptive <- plot_fpe(e1_4_summary_ad, "Adaptive Spline, Alpha = 0.05")
+fpe_tprs <- plot_fpe(e1_4_summary_tprs, "TPRS, Alpha = 0.05")
+fpe_adaptive_adj <- plot_fpe(e1_4_summary_adjalpha_ad, "Adaptive Spline, Alpha = sqrt(0.05)")
+fpe_tprs_adj <- plot_fpe(e1_4_summary_adjalpha, "TPRS, Alpha = sqrt(0.05)")
+
+
+pdf("typeIerror_plots.pdf")
+fpe_adaptive
+fpe_tprs
+fpe_adaptive_adj
+fpe_tprs_adj
+dev.off()
+
+```
+
+#Power
+```{r}
+plot_power <- function(summary, title){
+    e1_p <- ggplot(data=tidyr::pivot_longer(summary$e1$power, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "power"))+
+  geom_point(aes(x=dup, y=power, colour=method))+
+  geom_line(aes(x=dup, y=power, colour=method))+
+  labs(title = paste0("Exp 1 P,  ", title))
+  
+e2_p <- ggplot(data=tidyr::pivot_longer(summary$e2$power, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "power"))+
+  geom_point(aes(x=error, y=power, colour=method))+
+  geom_line(aes(x=error, y=power, colour=method))+
+  labs(title = paste0("Exp 2 P,  ", title))
+
+e3_p_1 <- ggplot(data=filter(tidyr::pivot_longer(summary$e3$power, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "power"), func!="var-p-width"))+
+  geom_point(aes(x=peak, y=power, colour=method))+
+  geom_line(aes(x=peak, y=power, colour=method))+
+  facet_grid(dup~func)+
+  labs(title = paste0("Exp 3 P,  ", title))
+  
+e3_p_2 <- ggplot(data=filter(tidyr::pivot_longer(e1_4_summary_adjalpha_ad$e3$power, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "power"), func=="var-p-width"))+
+  geom_point(aes(x=param, y=power, colour=method))+
+  geom_line(aes(x=param, y=power, colour=method))+
+  facet_grid(dup~func)+
+  labs(title = paste0("Exp 3 P,  ", title))
+
+return(list(e1_fpe = e1_p, e2_p = e2_p, e3_p_1 = e3_p_1, e3_p_2 = e3_p_2))
+}
+
+p_adaptive <- plot_power(e1_4_summary_ad, "Adaptive Spline, Alpha = 0.05")
+p_tprs <- plot_power(e1_4_summary_tprs, "TPRS, Alpha = 0.05")
+p_adaptive_adj <- plot_power(e1_4_summary_adjalpha_ad, "Adaptive Spline, Alpha = sqrt(0.05)")
+p_tprs_adj <- plot_power(e1_4_summary_adjalpha, "TPRS, Alpha = sqrt(0.05)")
+
+
+pdf("power_plots.pdf")
+p_adaptive
+p_tprs
+p_adaptive_adj
+p_tprs_adj
+dev.off()
+
+```
+
+
+
+
+pdf("e1_4_tprs_adj_ad_plots.pdf")
+#POWER ####
+ggplot(data=tidyr::pivot_longer(e1_4_summary_adjalpha_ad$e1$power, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "power"))+
+  geom_point(aes(x=dup, y=power, colour=method))+
+  geom_line(aes(x=dup, y=power, colour=method))
+
+ggplot(data=tidyr::pivot_longer(e1_4_summary_adjalpha_ad$e2$power, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "power"))+
+  geom_point(aes(x=error, y=power, colour=method))+
+  geom_line(aes(x=error, y=power, colour=method))
+
+ggplot(data=filter(tidyr::pivot_longer(e1_4_summary_adjalpha_ad$e3$power, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "power"), func!="var-p-width"))+
+  geom_point(aes(x=peak, y=power, colour=method))+
+  geom_line(aes(x=peak, y=power, colour=method))+
+  facet_grid(dup~func)
+ggplot(data=filter(tidyr::pivot_longer(e1_4_summary_adjalpha_ad$e3$power, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "power"), func=="var-p-width"))+
+  geom_point(aes(x=param, y=power, colour=method))+
+  geom_line(aes(x=param, y=power, colour=method))+
+  facet_grid(dup~func)
+
+
+# COVERAGE ####
+ggplot(data=e1_4_summary_adjalpha_ad$e1$coverage)+
+  geom_point(aes(x=dup, y=coverage_gr))+
+  geom_line(aes(x=dup, y=coverage_gr))+
+  geom_hline(aes(yintercept=0.95), linetype=2)
+
+ggplot(data=e1_4_summary_adjalpha_ad$e2$coverage)+
+  geom_point(aes(x=error, y=coverage_gr))+
+  geom_line(aes(x=error, y=coverage_gr))+
+  geom_hline(aes(yintercept=0.95), linetype=2)
+
+ggplot(data=filter(e1_4_summary_adjalpha_ad$e3$coverage, func!="var-p-width"))+
+  geom_point(aes(x=peak, y=coverage_gr, colour=as.factor(dup)))+
+  geom_line(aes(x=peak, y=coverage_gr, colour=as.factor(dup)))+
+  geom_hline(aes(yintercept=0.95), linetype=2)+
+  facet_wrap(~func)
+
+ggplot(data=filter(e1_4_summary_adjalpha_ad$e3$coverage, func=="var-p-width"))+
+  geom_point(aes(x=param, y=coverage_gr, colour=as.factor(dup)))+
+  geom_line(aes(x=param, y=coverage_gr, colour=as.factor(dup)))+
+  geom_hline(aes(yintercept=0.95), linetype=2)+
+  facet_wrap(~func)
+
+#PRECISION ####
+ggplot(data=e1_4_summary_adjalpha_ad$e1$precision)+
+  geom_point(aes(x=dup, y=width_avg_gr))+
+  geom_line(aes(x=dup, y=width_avg_gr))+
+  geom_ribbon(aes(x = dup, ymin=width_avg_gr-width_sd_gr, ymax=width_avg_gr+width_sd_gr), alpha=0.2)
+
+ggplot(data=e1_4_summary_adjalpha_ad$e2$precision)+
+  geom_point(aes(x=error, y=width_avg_gr))+
+  geom_line(aes(x=error, y=width_avg_gr))+
+  geom_ribbon(aes(x = error, ymin=width_avg_gr-width_sd_gr, ymax=width_avg_gr+width_sd_gr), alpha=0.2)
+
+ggplot(data=filter(e1_4_summary_adjalpha_ad$e3$precision, func !="var-p-width"))+
+  geom_point(aes(x=peak, y=width_avg_gr, colour=as.factor(dup)))+
+  geom_line(aes(x=peak, y=width_avg_gr, colour=as.factor(dup)))+
+  geom_ribbon(aes(x = peak, ymin=width_avg_gr-width_sd_gr, ymax=width_avg_gr+width_sd_gr, fill=as.factor(dup)), alpha=0)+
+  facet_wrap(~func)
+
+ggplot(data=filter(e1_4_summary_adjalpha_ad$e3$precision, func =="var-p-width"))+
+  geom_point(aes(x=param, y=width_avg_gr, colour=as.factor(dup)))+
+  geom_line(aes(x=param, y=width_avg_gr, colour=as.factor(dup)))+
+  geom_ribbon(aes(x = param, ymin=width_avg_gr-width_sd_gr, ymax=width_avg_gr+width_sd_gr, fill=as.factor(dup)), alpha=0)+
+  facet_wrap(~func)
+
+# BIAS ####
+ggplot(data=filter(e1_4_summary_adjalpha_ad$e1$bias, func== "norm"))+
+  geom_point(aes(x=dup, y=bias_avg_gr))+
+  geom_line(aes(x=dup, y=bias_avg_gr))+
+  geom_ribbon(aes(x = dup, ymin=bias_avg_gr-bias_sd_gr, ymax=bias_avg_gr+bias_sd_gr), alpha=0.2)+
+  geom_hline(aes( yintercept=0), linetype=2)
+
+ggplot(data=filter(e1_4_summary_adjalpha_ad$e2$bias, func== "norm"))+
+  geom_point(aes(x=error, y=bias_avg_gr))+
+  geom_line(aes(x=error, y=bias_avg_gr))+
+  geom_ribbon(aes(x = error, ymin=bias_avg_gr-bias_sd_gr, ymax=bias_avg_gr+bias_sd_gr), alpha=0.2)+
+  geom_hline(aes(yintercept=0), linetype=2)
+
+ggplot(data=filter(e1_4_summary_adjalpha_ad$e3$bias, func!= "var-p-width"))+
+  geom_point(aes(x=peak, y=bias_avg_gr, colour=as.factor(dup)))+
+  geom_line(aes(x=peak, y=bias_avg_gr, colour=as.factor(dup)))+
+  geom_ribbon(aes(x = peak, ymin=bias_avg_gr-bias_sd_gr, ymax=bias_avg_gr+bias_sd_gr, fill=as.factor(dup)), alpha=0.1)+
+  geom_hline(aes( yintercept=0), linetype=2)+
+facet_wrap(~func)
+
+ggplot(data=filter(e1_4_summary_adjalpha_ad$e3$bias, func== "var-p-width"))+
+  geom_point(aes(x=param, y=bias_avg_gr, colour=as.factor(dup)))+
+  geom_line(aes(x=param, y=bias_avg_gr, colour=as.factor(dup)))+
+  geom_ribbon(aes(x = param, ymin=bias_avg_gr-bias_sd_gr, ymax=bias_avg_gr+bias_sd_gr, fill=as.factor(dup)), alpha=0.1)+
+  geom_hline(aes( yintercept=0), linetype=2)+
+facet_wrap(~func)
+
+dev.off()
+
+
+

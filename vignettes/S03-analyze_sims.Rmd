@@ -18,6 +18,7 @@ knitr::opts_chunk$set(
 library(lextremagam)
 library(arrow)
 library(dplyr)
+library(ggplot2)
 ```
 
 #functions
@@ -62,10 +63,10 @@ get_power <- function(peak_test, lextr_me, lextr_gr, func_type, me = TRUE){
   if(me){
   lextr_me_pr <-  lextr_me%>%
     filter(func%in% func_type)%>%
-    group_by(scenario_id, func, param, rep, error, dup, sample_id)%>%
+    group_by(scenario_id, func, param, rep, error, dup, sample_id, peak)%>%
     summarize(me = any(feature == "local_max"))%>%
     ungroup()%>%
-    group_by(scenario_id, func, param, error, dup, )%>%
+    group_by(scenario_id, func, param, error, dup, peak)%>%
     summarize(pr_me = sum(me)/n(),
               n_me=n())%>%
     ungroup()
@@ -75,19 +76,19 @@ get_power <- function(peak_test, lextr_me, lextr_gr, func_type, me = TRUE){
   
   lextr_gr_pr <-  lextr_gr%>%
     filter(func%in% func_type)%>%
-    group_by(scenario_id, func, param, rep, error, dup, sample_id)%>%
+    group_by(scenario_id, func, param, rep, error, dup, sample_id, peak)%>%
     summarize(gr = any(feature == "local_max"))%>%
     ungroup()%>%
-    group_by(scenario_id, func, param, error, dup, )%>%
+    group_by(scenario_id, func, param, error, dup, peak)%>%
     summarize(pr_gr = sum(gr, na.rm = TRUE)/n(),
               n_gr=n())%>%
     ungroup()
   
   power <- peak_test_pr
-  if(me){
-    power <- left_join(power, lextr_me_pr, by=c("scenario_id", "func", "param", "error", "dup"))
-  }
   power <- left_join(power, lextr_gr_pr, by=c("scenario_id", "func", "param", "error", "dup"))
+  if(me){
+    power <- left_join(power, lextr_me_pr, by=c("scenario_id", "func", "param", "error", "dup", "peak"))
+  }
 
   return(power)
 }
@@ -109,7 +110,7 @@ get_fperror <- function(peak_test, lextr_me, lextr_gr, func_type, me = TRUE){
       group_by(scenario_id, func, param, rep, error, dup, sample_id)%>%
       summarize(me = any(feature == "local_max"))%>%
       ungroup()%>%
-      group_by(scenario_id, func, param, error, dup )%>%
+      group_by(scenario_id, func, param, error, dup)%>%
       summarize(pr_me = sum(me)/n(),
                 n_me=n())%>%
       ungroup()
@@ -145,10 +146,10 @@ get_coverage <- function(lextr_me, lextr_gr, func_type, me = TRUE){
       ungroup()
     
     coverage_me <- capture_me %>%
-      group_by(scenario_id, func, param, error, dup, sample_id)%>%
+      group_by(scenario_id, func, param, error, dup, sample_id, peak)%>%
       summarize(capture = sum(capture))%>%
       ungroup()%>%
-      group_by(scenario_id, func, param, error, dup)%>%
+      group_by(scenario_id, func, param, error, dup, peak)%>%
       summarize(coverage_me = sum(capture)/n(),
                 n_me = n())%>%
       ungroup()
@@ -173,10 +174,10 @@ get_coverage <- function(lextr_me, lextr_gr, func_type, me = TRUE){
     ungroup()
    
    coverage_gr <- capture_gr %>%
-    group_by(scenario_id, func, param, error, dup, sample_id)%>%
+    group_by(scenario_id, func, param, error, dup, sample_id, peak)%>%
     summarize(capture = sum(capture))%>%
     ungroup()%>%
-    group_by(scenario_id, func, param, error, dup)%>%
+    group_by(scenario_id, func, param, error, dup, peak)%>%
     summarize(coverage_gr = sum(capture)/n(),
               n_gr = n())%>%
     ungroup()
@@ -207,11 +208,11 @@ get_precision <- function(lextr_me, lextr_gr, func_type, me = TRUE){
     precision_me <- lextr_me%>%
     filter(func %in% func_type, feature==c("local_max"))%>%
     mutate(width= x_end-x_start)%>%
-    group_by(func, param, rep, error, dup, scenario_id, sample_id)%>%
+    group_by(func, param, rep, error, dup, scenario_id, sample_id, peak)%>%
     summarize(sum_width= sum(width),
               n_seg = n())%>%
     ungroup()%>%
-    group_by(func, param, error, dup, scenario_id)%>%
+    group_by(func, param, error, dup, scenario_id, peak)%>%
     summarize(width_avg_me = mean(sum_width),
               width_sd_me = sd(sum_width),
               n_2etseg_me = sum(n_seg>=2),
@@ -222,11 +223,11 @@ get_precision <- function(lextr_me, lextr_gr, func_type, me = TRUE){
   precision_gr <- lextr_gr%>%
     filter(func %in% func_type, feature==c("local_max"))%>%
     mutate(width= x_end-x_start)%>%
-    group_by(func, param, rep, error, dup, scenario_id, sample_id)%>%
+    group_by(func, param, rep, error, dup, scenario_id, sample_id, peak)%>%
     summarize(sum_width= sum(width),
               n_seg = n())%>%
     ungroup()%>%
-    group_by(func, param, error, dup, scenario_id)%>%
+    group_by(func, param, error, dup, scenario_id, peak)%>%
     summarize(width_avg_gr = mean(sum_width),
               width_sd_gr = sd(sum_width),
               n_2etseg_gr = sum(n_seg>=2),
@@ -234,7 +235,7 @@ get_precision <- function(lextr_me, lextr_gr, func_type, me = TRUE){
     ungroup()
   
   if(me){
-    precision <- left_join(precision_me, precision_gr, by=c("scenario_id", "func", "param", "error", "dup"))
+    precision <- left_join(precision_me, precision_gr, by=c("scenario_id", "func", "param", "error", "dup", "peak"))
   } else {
     precision <- precision_gr
   }
@@ -252,11 +253,11 @@ get_bias <- function(lextr_me, lextr_gr, func_type, me = TRUE){
         pu_dist<0 & pl_dist>0 ~0,
         pu_dist<0 & pl_dist<0 ~ pl_dist,
         pu_dist>0 & pl_dist>0 ~pu_dist))%>%
-      group_by(func, param ,rep, error, dup, scenario_id, sample_id)%>%
+      group_by(func, param ,rep, error, dup, scenario_id, sample_id, peak)%>%
       summarize( n_int_me = n(), 
                  bias = sum(bias, na.rm = TRUE))%>%
       ungroup()%>%
-      group_by(func, param, error, dup, scenario_id)%>%
+      group_by(func, param, error, dup, scenario_id, peak)%>%
       summarize(bias_avg_me = mean(bias),
                 bias_sd_me = sd(bias),
                 n_me = n())%>%
@@ -270,11 +271,11 @@ get_bias <- function(lextr_me, lextr_gr, func_type, me = TRUE){
         pu_dist<0 & pl_dist>0 ~0,
         pu_dist<0 & pl_dist<0 ~ pl_dist,
         pu_dist>0 & pl_dist>0 ~pu_dist))%>%
-      group_by(func, param ,rep, error, dup, scenario_id, sample_id)%>%
+      group_by(func, param ,rep, error, dup, scenario_id, sample_id, peak)%>%
       summarize( n_int_me = n(), 
                  bias = sum(bias, na.rm = TRUE))%>%
       ungroup()%>%
-      group_by(func, param, error, dup, scenario_id)%>%
+      group_by(func, param, error, dup, scenario_id, peak)%>%
       summarize(bias_avg_me_max = mean(bias),
                 bias_sd_me_max = sd(bias),
                 n_me_max = n())%>%
@@ -289,11 +290,11 @@ get_bias <- function(lextr_me, lextr_gr, func_type, me = TRUE){
       pu_dist<0 & pl_dist>0 ~0,
       pu_dist<0 & pl_dist<0 ~ pl_dist,
       pu_dist>0 & pl_dist>0 ~pu_dist))%>%
-      group_by(func, param ,rep, error, dup, scenario_id, sample_id)%>%
+      group_by(func, param ,rep, error, dup, scenario_id, sample_id, peak)%>%
       summarize( n_int_me = n(), 
                  bias = sum(bias, na.rm = TRUE))%>%
       ungroup()%>%
-      group_by(func, param, error, dup, scenario_id)%>%
+      group_by(func, param, error, dup, scenario_id, peak)%>%
       summarize(bias_avg_gr = mean(bias),
                 bias_sd_gr = sd(bias),
                 n_gr = n())%>%
@@ -307,22 +308,92 @@ get_bias <- function(lextr_me, lextr_gr, func_type, me = TRUE){
       pu_dist<0 & pl_dist>0 ~0,
       pu_dist<0 & pl_dist<0 ~ pl_dist,
       pu_dist>0 & pl_dist>0 ~ pu_dist))%>%
-      group_by(func, param ,rep, error, dup, scenario_id, sample_id)%>%
+      group_by(func, param ,rep, error, dup, scenario_id, sample_id, peak)%>%
       summarize( n_int_me = n(), 
                  bias = sum(bias, na.rm = TRUE))%>%
       ungroup()%>%
-      group_by(func, param, error, dup, scenario_id)%>%
+      group_by(func, param, error, dup, scenario_id, peak)%>%
       summarize(bias_avg_gr_max = mean(bias),
                 bias_sd_gr_max = sd(bias),
                 n_gr_max = n())%>%
       ungroup()
   
   bias <- bias_gr%>%
-    left_join( bias_gr_max, by=c("scenario_id", "func", "param", "error", "dup"))
+    left_join( bias_gr_max, by=c("scenario_id", "func", "param", "error", "dup", "peak"))
   if(me){
     bias <- bias%>%
-      left_join(bias_me, by=c("scenario_id", "func", "param", "error", "dup"))%>%
-      left_join(bias_me_max, by=c("scenario_id", "func", "param", "error", "dup"))
+      left_join(bias_me, by=c("scenario_id", "func", "param", "error", "dup", "peak"))%>%
+      left_join(bias_me_max, by=c("scenario_id", "func", "param", "error", "dup", "peak"))
+  }
+  
+  return(bias)
+}
+
+get_bias2 <- function(lextr_me, lextr_gr, func_type, me = FALSE){
+  if(me){
+    bias_me <- lextr_me%>%
+      dplyr::filter(feature %in% c("local_max"))%>%
+      mutate(midpoint = (x_end+x_start)/2)%>%
+      mutate(dist = peak-midpoint)%>%
+      group_by(func, param ,rep, error, dup, scenario_id, sample_id, peak)%>%
+      summarize( n_int_me = n(), 
+                 dist = sum(dist, na.rm = TRUE))%>%
+      ungroup()%>%
+      group_by(func, param, error, dup, scenario_id, peak)%>%
+      summarize(dist_avg_me = mean(dist),
+                dist_sd_me = sd(dist),
+                n_me = n())%>%
+      ungroup()
+    
+    bias_me_max <- lextr_me%>%
+      filter(feature %in% c("local_max", "boundary_max"))%>%
+      mutate(midpoint = (x_end+x_start)/2)%>%
+      mutate(dist = peak-midpoint)%>%
+      group_by(func, param ,rep, error, dup, scenario_id, sample_id, peak)%>%
+      summarize( n_int_me = n(), 
+                 dist = sum(dist, na.rm = TRUE))%>%
+      ungroup()%>%
+      group_by(func, param, error, dup, scenario_id, peak)%>%
+      summarize(dist_avg_me_max = mean(dist),
+                dist_sd_me_max = sd(dist),
+                n_me_max = n())%>%
+      ungroup()
+  }
+  
+  bias_gr <- lextr_gr%>%
+    filter(feature %in% c("local_max", "boundary_max", "notrend"))%>%
+    mutate(midpoint = (x_end+x_start)/2)%>%
+      mutate(dist = peak-midpoint)%>%
+      group_by(func, param ,rep, error, dup, scenario_id, sample_id, peak)%>%
+      summarize( n_int_me = n(), 
+                 dist = sum(dist, na.rm = TRUE))%>%
+      ungroup()%>%
+      group_by(func, param, error, dup, scenario_id, peak)%>%
+      summarize(dist_avg_gr = mean(dist),
+                dist_sd_gr = sd(dist),
+                n_gr = n())%>%
+      ungroup()
+  
+  bias_gr_max <- lextr_gr%>%
+    filter(feature %in% c("local_max", "boundary_max"))%>%
+      mutate(midpoint = (x_end+x_start)/2)%>%
+      mutate(dist = peak-midpoint)%>%
+      group_by(func, param ,rep, error, dup, scenario_id, sample_id, peak)%>%
+      summarize( n_int_me = n(), 
+                 dist = sum(dist, na.rm = TRUE))%>%
+      ungroup()%>%
+      group_by(func, param, error, dup, scenario_id, peak)%>%
+      summarize(bias_avg_gr_max = mean(dist),
+                bias_sd_gr_max = sd(dist),
+                n_gr_max = n())%>%
+      ungroup()
+  
+  bias <- bias_gr%>%
+    left_join( bias_gr_max, by=c("scenario_id", "func", "param", "error", "dup", "peak"))
+  if(me){
+    bias <- bias%>%
+      left_join(bias_me, by=c("scenario_id", "func", "param", "error", "dup", "peak"))%>%
+      left_join(bias_me_max, by=c("scenario_id", "func", "param", "error", "dup", "peak"))
   }
   
   return(bias)
@@ -778,6 +849,118 @@ setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
 
 saveRDS(e1_4_summary_adjalpha, "data-raw/sim/analy_results/e1_4_summary_adjalpha.RDS")
 
+e3_coverage_long <- tidyr::pivot_longer(data=e3_summary$coverage, cols = c("coverage_me", "coverage_me_max", "coverage_gr", "coverage_gr_max"), names_to = "cov_type", values_to = "coverage")
+
+pdf("e1_4_tprs_adj_plots.pdf")
+#POWER ####
+ggplot(data=tidyr::pivot_longer(e1_4_summary_adjalpha$e1$power, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "power"))+
+  geom_point(aes(x=dup, y=power, colour=method))+
+  geom_line(aes(x=dup, y=power, colour=method))
+
+ggplot(data=tidyr::pivot_longer(e1_4_summary_adjalpha$e2$power, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "power"))+
+  geom_point(aes(x=error, y=power, colour=method))+
+  geom_line(aes(x=error, y=power, colour=method))
+
+ggplot(data=filter(tidyr::pivot_longer(e1_4_summary_adjalpha$e3$power, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "power"), func!="var-p-width"))+
+  geom_point(aes(x=peak, y=power, colour=method))+
+  geom_line(aes(x=peak, y=power, colour=method))+
+  facet_grid(dup~func)
+ggplot(data=filter(tidyr::pivot_longer(e1_4_summary_adjalpha$e3$power, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "power"), func=="var-p-width"))+
+  geom_point(aes(x=param, y=power, colour=method))+
+  geom_line(aes(x=param, y=power, colour=method))+
+  facet_grid(dup~func)
+
+#TYPE I ERROR ####
+ggplot(data=tidyr::pivot_longer(e1_4_summary_adjalpha$e1$fperror, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "fperror"))+
+  geom_point(aes(x=dup, y=fperror, colour=method))+
+  geom_line(aes(x=dup, y=fperror, colour=method))+
+  geom_hline(aes(yintercept=0.05), linetype=2)
+
+ggplot(data=tidyr::pivot_longer(e1_4_summary_adjalpha$e2$fperror, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "fperror"))+
+  geom_point(aes(x=error, y=fperror, colour=method))+
+  geom_line(aes(x=error, y=fperror, colour=method))+
+  geom_hline(aes(yintercept=0.05), linetype=2)
+
+ggplot(data=tidyr::pivot_longer(e1_4_summary_adjalpha$e4$fperror, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "fperror"))+
+  geom_point(aes(x=param, y=fperror, colour=method))+
+  geom_line(aes(x=param, y=fperror, colour=method))+
+  geom_hline(aes(yintercept=0.05), linetype=2)+
+  facet_grid(dup~func)
+
+# COVERAGE ####
+ggplot(data=e1_4_summary_adjalpha_ad$e1$coverage)+
+  geom_point(aes(x=dup, y=coverage_gr))+
+  geom_line(aes(x=dup, y=coverage_gr))+
+  geom_hline(aes(yintercept=0.95), linetype=2)
+
+ggplot(data=e1_4_summary_adjalpha$e2$coverage)+
+  geom_point(aes(x=error, y=coverage_gr))+
+  geom_line(aes(x=error, y=coverage_gr))+
+  geom_hline(aes(yintercept=0.95), linetype=2)
+
+ggplot(data=filter(e1_4_summary_adjalpha$e3$coverage, func!="var-p-width"))+
+  geom_point(aes(x=peak, y=coverage_gr, colour=as.factor(dup)))+
+  geom_line(aes(x=peak, y=coverage_gr, colour=as.factor(dup)))+
+  geom_hline(aes(yintercept=0.95), linetype=2)+
+  facet_wrap(~func)
+
+ggplot(data=filter(e1_4_summary_adjalpha$e3$coverage, func=="var-p-width"))+
+  geom_point(aes(x=param, y=coverage_gr, colour=as.factor(dup)))+
+  geom_line(aes(x=param, y=coverage_gr, colour=as.factor(dup)))+
+  geom_hline(aes(yintercept=0.95), linetype=2)+
+  facet_wrap(~func)
+
+#PRECISION ####
+ggplot(data=e1_4_summary_adjalpha$e1$precision)+
+  geom_point(aes(x=dup, y=width_avg_gr))+
+  geom_line(aes(x=dup, y=width_avg_gr))+
+  geom_ribbon(aes(x = dup, ymin=width_avg_gr-width_sd_gr, ymax=width_avg_gr+width_sd_gr), alpha=0.2)
+
+ggplot(data=e1_4_summary_adjalpha$e2$precision)+
+  geom_point(aes(x=error, y=width_avg_gr))+
+  geom_line(aes(x=error, y=width_avg_gr))+
+  geom_ribbon(aes(x = error, ymin=width_avg_gr-width_sd_gr, ymax=width_avg_gr+width_sd_gr), alpha=0.2)
+
+ggplot(data=filter(e1_4_summary_adjalpha$e3$precision, func !="var-p-width"))+
+  geom_point(aes(x=peak, y=width_avg_gr, colour=as.factor(dup)))+
+  geom_line(aes(x=peak, y=width_avg_gr, colour=as.factor(dup)))+
+  geom_ribbon(aes(x = peak, ymin=width_avg_gr-width_sd_gr, ymax=width_avg_gr+width_sd_gr, fill=as.factor(dup)), alpha=0)+
+  facet_wrap(~func)
+
+ggplot(data=filter(e1_4_summary_adjalpha$e3$precision, func =="var-p-width"))+
+  geom_point(aes(x=param, y=width_avg_gr, colour=as.factor(dup)))+
+  geom_line(aes(x=param, y=width_avg_gr, colour=as.factor(dup)))+
+  geom_ribbon(aes(x = param, ymin=width_avg_gr-width_sd_gr, ymax=width_avg_gr+width_sd_gr, fill=as.factor(dup)), alpha=0)+
+  facet_wrap(~func)
+
+# BIAS ####
+ggplot(data=filter(e1_4_summary_adjalpha$e1$bias, func== "norm"))+
+  geom_point(aes(x=dup, y=bias_avg_gr))+
+  geom_line(aes(x=dup, y=bias_avg_gr))+
+  geom_ribbon(aes(x = dup, ymin=bias_avg_gr-bias_sd_gr, ymax=bias_avg_gr+bias_sd_gr), alpha=0.2)+
+  geom_hline(aes( yintercept=0), linetype=2)
+
+ggplot(data=filter(e1_4_summary_adjalpha$e2$bias, func== "norm"))+
+  geom_point(aes(x=error, y=bias_avg_gr))+
+  geom_line(aes(x=error, y=bias_avg_gr))+
+  geom_ribbon(aes(x = error, ymin=bias_avg_gr-bias_sd_gr, ymax=bias_avg_gr+bias_sd_gr), alpha=0.2)+
+  geom_hline(aes(yintercept=0), linetype=2)
+
+ggplot(data=filter(e1_4_summary_adjalpha$e3$bias, func!= "var-p-width"))+
+  geom_point(aes(x=peak, y=bias_avg_gr, colour=as.factor(dup)))+
+  geom_line(aes(x=peak, y=bias_avg_gr, colour=as.factor(dup)))+
+  geom_ribbon(aes(x = peak, ymin=bias_avg_gr-bias_sd_gr, ymax=bias_avg_gr+bias_sd_gr, fill=as.factor(dup)), alpha=0.1)+
+  geom_hline(aes( yintercept=0), linetype=2)+
+facet_wrap(~func)
+
+ggplot(data=filter(e1_4_summary_adjalpha$e3$bias, func== "var-p-width"))+
+  geom_point(aes(x=param, y=bias_avg_gr, colour=as.factor(dup)))+
+  geom_line(aes(x=param, y=bias_avg_gr, colour=as.factor(dup)))+
+  geom_ribbon(aes(x = param, ymin=bias_avg_gr-bias_sd_gr, ymax=bias_avg_gr+bias_sd_gr, fill=as.factor(dup)), alpha=0.1)+
+  geom_hline(aes( yintercept=0), linetype=2)+
+facet_wrap(~func)
+
+dev.off()
 ```
 #experiment 1-4 adjalpha ad
 ```{r}
@@ -866,6 +1049,7 @@ e3_summary_adjalpha_ad <- get_results(peak_test = e3_peaktest_results_adjalpha_a
                           me = FALSE)
 
 #exp 4
+setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
 if(!exists("ref_metadata_e4")){
   sim_dat_e4 <- read_parquet("data-raw/sim/data/sim_dat_e4.parquet")
   #adding reference data
@@ -903,8 +1087,411 @@ e1_4_summary_adjalpha_ad <- list(
 setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
 
 saveRDS(e1_4_summary_adjalpha_ad, "data-raw/sim/analy_results/e1_4_summary_adjalpha_ad.RDS")
+
+pdf("e1_4_tprs_adj_ad_plots.pdf")
+#POWER ####
+ggplot(data=tidyr::pivot_longer(e1_4_summary_adjalpha_ad$e1$power, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "power"))+
+  geom_point(aes(x=dup, y=power, colour=method))+
+  geom_line(aes(x=dup, y=power, colour=method))
+
+ggplot(data=tidyr::pivot_longer(e1_4_summary_adjalpha_ad$e2$power, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "power"))+
+  geom_point(aes(x=error, y=power, colour=method))+
+  geom_line(aes(x=error, y=power, colour=method))
+
+ggplot(data=filter(tidyr::pivot_longer(e1_4_summary_adjalpha_ad$e3$power, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "power"), func!="var-p-width"))+
+  geom_point(aes(x=peak, y=power, colour=method))+
+  geom_line(aes(x=peak, y=power, colour=method))+
+  facet_grid(dup~func)
+ggplot(data=filter(tidyr::pivot_longer(e1_4_summary_adjalpha_ad$e3$power, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "power"), func=="var-p-width"))+
+  geom_point(aes(x=param, y=power, colour=method))+
+  geom_line(aes(x=param, y=power, colour=method))+
+  facet_grid(dup~func)
+
+#TYPE I ERROR ####
+ggplot(data=tidyr::pivot_longer(e1_4_summary_adjalpha_ad$e1$fperror, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "fperror"))+
+  geom_point(aes(x=dup, y=fperror, colour=method))+
+  geom_line(aes(x=dup, y=fperror, colour=method))+
+  geom_hline(aes(yintercept=0.05), linetype=2)
+
+ggplot(data=tidyr::pivot_longer(e1_4_summary_adjalpha_ad$e2$fperror, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "fperror"))+
+  geom_point(aes(x=error, y=fperror, colour=method))+
+  geom_line(aes(x=error, y=fperror, colour=method))+
+  geom_hline(aes(yintercept=0.05), linetype=2)
+
+ggplot(data=tidyr::pivot_longer(e1_4_summary_adjalpha_ad$e4$fperror, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "fperror"))+
+  geom_point(aes(x=param, y=fperror, colour=method))+
+  geom_line(aes(x=param, y=fperror, colour=method))+
+  geom_hline(aes(yintercept=0.05), linetype=2)+
+  facet_grid(dup~func)
+
+# COVERAGE ####
+ggplot(data=e1_4_summary_adjalpha_ad$e1$coverage)+
+  geom_point(aes(x=dup, y=coverage_gr))+
+  geom_line(aes(x=dup, y=coverage_gr))+
+  geom_hline(aes(yintercept=0.95), linetype=2)
+
+ggplot(data=e1_4_summary_adjalpha_ad$e2$coverage)+
+  geom_point(aes(x=error, y=coverage_gr))+
+  geom_line(aes(x=error, y=coverage_gr))+
+  geom_hline(aes(yintercept=0.95), linetype=2)
+
+ggplot(data=filter(e1_4_summary_adjalpha_ad$e3$coverage, func!="var-p-width"))+
+  geom_point(aes(x=peak, y=coverage_gr, colour=as.factor(dup)))+
+  geom_line(aes(x=peak, y=coverage_gr, colour=as.factor(dup)))+
+  geom_hline(aes(yintercept=0.95), linetype=2)+
+  facet_wrap(~func)
+
+ggplot(data=filter(e1_4_summary_adjalpha_ad$e3$coverage, func=="var-p-width"))+
+  geom_point(aes(x=param, y=coverage_gr, colour=as.factor(dup)))+
+  geom_line(aes(x=param, y=coverage_gr, colour=as.factor(dup)))+
+  geom_hline(aes(yintercept=0.95), linetype=2)+
+  facet_wrap(~func)
+
+#PRECISION ####
+ggplot(data=e1_4_summary_adjalpha_ad$e1$precision)+
+  geom_point(aes(x=dup, y=width_avg_gr))+
+  geom_line(aes(x=dup, y=width_avg_gr))+
+  geom_ribbon(aes(x = dup, ymin=width_avg_gr-width_sd_gr, ymax=width_avg_gr+width_sd_gr), alpha=0.2)
+
+ggplot(data=e1_4_summary_adjalpha_ad$e2$precision)+
+  geom_point(aes(x=error, y=width_avg_gr))+
+  geom_line(aes(x=error, y=width_avg_gr))+
+  geom_ribbon(aes(x = error, ymin=width_avg_gr-width_sd_gr, ymax=width_avg_gr+width_sd_gr), alpha=0.2)
+
+ggplot(data=filter(e1_4_summary_adjalpha_ad$e3$precision, func !="var-p-width"))+
+  geom_point(aes(x=peak, y=width_avg_gr, colour=as.factor(dup)))+
+  geom_line(aes(x=peak, y=width_avg_gr, colour=as.factor(dup)))+
+  geom_ribbon(aes(x = peak, ymin=width_avg_gr-width_sd_gr, ymax=width_avg_gr+width_sd_gr, fill=as.factor(dup)), alpha=0)+
+  facet_wrap(~func)
+
+ggplot(data=filter(e1_4_summary_adjalpha_ad$e3$precision, func =="var-p-width"))+
+  geom_point(aes(x=param, y=width_avg_gr, colour=as.factor(dup)))+
+  geom_line(aes(x=param, y=width_avg_gr, colour=as.factor(dup)))+
+  geom_ribbon(aes(x = param, ymin=width_avg_gr-width_sd_gr, ymax=width_avg_gr+width_sd_gr, fill=as.factor(dup)), alpha=0)+
+  facet_wrap(~func)
+
+# BIAS ####
+ggplot(data=filter(bias_all_data$e1_3_bias_adjalpha_ad$e1_bias_adjalpha_ad, func== "norm"))+
+  geom_point(aes(x=dup, y=bias_avg_gr))+
+  geom_line(aes(x=dup, y=bias_avg_gr))+
+  geom_ribbon(aes(x = dup, ymin=bias_avg_gr-bias_sd_gr, ymax=bias_avg_gr+bias_sd_gr), alpha=0.2)+
+  geom_hline(aes( yintercept=0), linetype=2)
+
+ggplot(data=filter(bias_all_data$e1_3_bias_adjalpha_ad$e2_bias_adjalpha_ad, func== "norm"))+
+  geom_point(aes(x=error, y=bias_avg_gr))+
+  geom_line(aes(x=error, y=bias_avg_gr))+
+  geom_ribbon(aes(x = error, ymin=bias_avg_gr-bias_sd_gr, ymax=bias_avg_gr+bias_sd_gr), alpha=0.2)+
+  geom_hline(aes(yintercept=0), linetype=2)
+
+ggplot(data=filter(bias_all_data$e1_3_bias_adjalpha_ad$e3_bias_adjalpha_ad, func!= "var-p-width"))+
+  geom_point(aes(x=peak, y=bias_avg_gr, colour=as.factor(dup)))+
+  geom_line(aes(x=peak, y=bias_avg_gr, colour=as.factor(dup)))+
+  geom_ribbon(aes(x = peak, ymin=bias_avg_gr-bias_sd_gr, ymax=bias_avg_gr+bias_sd_gr, fill=as.factor(dup)), alpha=0.1)+
+  geom_hline(aes( yintercept=0), linetype=2)+
+facet_wrap(~func)
+
+ggplot(data=filter(bias_all_data$e1_3_bias_adjalpha_ad$e3_bias_adjalpha_ad, func== "var-p-width"))+
+  geom_point(aes(x=param, y=bias_avg_gr, colour=as.factor(dup)))+
+  geom_line(aes(x=param, y=bias_avg_gr, colour=as.factor(dup)))+
+  geom_ribbon(aes(x = param, ymin=bias_avg_gr-bias_sd_gr, ymax=bias_avg_gr+bias_sd_gr, fill=as.factor(dup)), alpha=0.1)+
+  geom_hline(aes( yintercept=0), linetype=2)+
+facet_wrap(~func)
+
+dev.off()
 ```
 
+# Analyze new way of doing bias for all ####
+```{r}
+
+setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
+#import all data ####
+
+n_gam_params <- c(names(list(mget(ls(pattern = "e1_gam_params")))[[1]]), 
+                names(list(mget(ls(pattern = "e2_gam_params")))[[1]]),
+                names(list(mget(ls(pattern = "e3_gam_params")))[[1]]))
+
+n_lextrema_results_me <- c(names(list(mget(ls(pattern = "e1_lextrema_results_me")))[[1]]),
+                         names(list(mget(ls(pattern = "e2_lextrema_results_me")))[[1]]),
+                         names(list(mget(ls(pattern = "e3_lextrema_results_me")))[[1]]))
+
+n_lextrema_results_gr <- c(names(list(mget(ls(pattern = "e1_lextrema_results_gr")))[[1]]), 
+                         names(list(mget(ls(pattern = "e2_lextrema_results_gr")))[[1]]),
+                         names(list(mget(ls(pattern = "e3_lextrema_results_gr")))[[1]]))
+
+n_peaktest_results <- c(names(list(mget(ls(pattern = "e1_peaktest_results")))[[1]]),
+                        names(list(mget(ls(pattern = "e2_peaktest_results")))[[1]]),
+                        names(list(mget(ls(pattern = "e3_peaktest_results")))[[1]]))
+
+if(length(n_gam_params)<12|
+   length(n_lextrema_results_me)<3|
+   length(n_lextrema_results_gr)<12|
+   length(n_peaktest_results)<12){
+e1_gam_params <- read_parquet("data-raw/sim/results/gam_params_e1.parquet")
+e1_gam_params <- full_join(ref_metadata_e1, e1_gam_params, by="sample_id")
+
+e1_lextrema_results_me <- read_parquet("data-raw/sim/results/lextrema_results_me_e1.parquet")
+e1_lextrema_results_me <- full_join(ref_metadata_e1, e1_lextrema_results_me, by="sample_id")
+
+e1_lextrema_results_gratia <- read_parquet("data-raw/sim/results/lextrema_results_gr_e1.parquet")
+e1_lextrema_results_gratia <- full_join(ref_metadata_e1, e1_lextrema_results_gratia, by="sample_id")
+
+e1_peaktest_results <- read_parquet("data-raw/sim/results/peaktest_results_e1.parquet")
+ 
+e2_gam_params <- read_parquet("data-raw/sim/results/gam_params_e2.parquet")
+e2_gam_params <- full_join(ref_metadata_e2, e2_gam_params, by="sample_id")
+
+e2_lextrema_results_me <- read_parquet("data-raw/sim/results/lextrema_results_me_e2.parquet")
+e2_lextrema_results_me <- full_join(ref_metadata_e2, e2_lextrema_results_me, by="sample_id")
+e2_lextrema_results_me$feature[which(is.na(e2_lextrema_results_me$feature))] <- "notrend"
+
+e2_lextrema_results_gratia <- read_parquet("data-raw/sim/results/lextrema_results_gr_e2.parquet")
+e2_lextrema_results_gratia <- full_join(ref_metadata_e2, e2_lextrema_results_gratia, by="sample_id")
+e2_lextrema_results_gratia$feature[which(is.na(e2_lextrema_results_gratia$feature))] <- "notrend"
+
+e2_peaktest_results <- read_parquet("data-raw/sim/results/peaktest_results_e2.parquet")
+
+e3_gam_params <- read_parquet("data-raw/sim/results/gam_params_e3.parquet")
+e3_gam_params <- full_join(ref_metadata_e3, e3_gam_params, by="sample_id")
+
+e3_lextrema_results_me <- read_parquet("data-raw/sim/results/lextrema_results_me_e3.parquet")
+e3_lextrema_results_me <- full_join(ref_metadata_e3, e3_lextrema_results_me, by="sample_id")
+
+e3_lextrema_results_gratia <- read_parquet("data-raw/sim/results/lextrema_results_gr_e3.parquet")
+e3_lextrema_results_gratia <- full_join(ref_metadata_e3, e3_lextrema_results_gratia, by="sample_id")
+
+e3_peaktest_results <- read_parquet("data-raw/sim/results/peaktest_results_e3.parquet")
+
+##tprs ####
+e1_gam_params_tprs <- read_parquet("data-raw/sim/results/gam_params_e1_tprs.parquet")
+e1_gam_params_tprs <- full_join(ref_metadata_e1, e1_gam_params_tprs, by="sample_id")
+
+e1_lextrema_results_gratia_tprs <- read_parquet("data-raw/sim/results/lextrema_results_gr_e1_tprs.parquet")
+e1_lextrema_results_gratia_tprs <- full_join(ref_metadata_e1, e1_lextrema_results_gratia_tprs, by="sample_id")
+
+e1_peaktest_results_tprs <- read_parquet("data-raw/sim/results/peaktest_results_e1_tprs.parquet")
+
+e2_gam_params_tprs <- read_parquet("data-raw/sim/results/gam_params_e2_tprs.parquet")
+e2_gam_params_tprs <- full_join(ref_metadata_e2, e2_gam_params_tprs, by="sample_id")
+
+e2_lextrema_results_gratia_tprs <- read_parquet("data-raw/sim/results/lextrema_results_gr_e2_tprs.parquet")
+e2_lextrema_results_gratia_tprs <- full_join(ref_metadata_e2, e2_lextrema_results_gratia_tprs, by="sample_id")
+
+e2_peaktest_results_tprs <- read_parquet("data-raw/sim/results/peaktest_results_e2_tprs.parquet")
+
+e3_gam_params_tprs <- read_parquet("data-raw/sim/results/gam_params_e3_tprs.parquet")
+e3_gam_params_tprs <- full_join(ref_metadata_e3, e3_gam_params_tprs, by="sample_id")
+
+e3_lextrema_results_gratia_tprs <- read_parquet("data-raw/sim/results/lextrema_results_gr_e3_tprs.parquet")
+e3_lextrema_results_gratia_tprs <- full_join(ref_metadata_e3, e3_lextrema_results_gratia_tprs, by="sample_id")
+
+e3_peaktest_results_tprs <- read_parquet("data-raw/sim/results/peaktest_results_e3_tprs.parquet")
+
+##Adj ad
+
+e1_gam_params_adjalpha_ad <- read_parquet("data-raw/sim/results/gam_params_e1_adjalpha_ad.parquet")
+e1_gam_params_adjalpha_ad <- full_join(ref_metadata_e1, e1_gam_params_adjalpha_ad, by="sample_id")
+
+e1_lextrema_results_gratia_adjalpha_ad <- read_parquet("data-raw/sim/results/lextrema_results_gr_e1_adjalpha_ad.parquet")
+e1_lextrema_results_gratia_adjalpha_ad <- full_join(ref_metadata_e1, e1_lextrema_results_gratia_adjalpha_ad, by="sample_id")
+
+e1_peaktest_results_adjalpha_ad <- read_parquet("data-raw/sim/results/peaktest_results_e1_adjalpha_ad.parquet")
+
+e2_gam_params_adjalpha_ad <- read_parquet("data-raw/sim/results/gam_params_e2_adjalpha_ad.parquet")
+e2_gam_params_adjalpha_ad <- full_join(ref_metadata_e2, e2_gam_params_adjalpha_ad, by="sample_id")
+
+e2_lextrema_results_gratia_adjalpha_ad <- read_parquet("data-raw/sim/results/lextrema_results_gr_e2_adjalpha_ad.parquet")
+e2_lextrema_results_gratia_adjalpha_ad <- full_join(ref_metadata_e2, e2_lextrema_results_gratia_adjalpha_ad, by="sample_id")
+
+e2_peaktest_results_adjalpha_ad <- read_parquet("data-raw/sim/results/peaktest_results_e2_adjalpha_ad.parquet")
+
+e3_gam_params_adjalpha_ad <- read_parquet("data-raw/sim/results/gam_params_e3_adjalpha_ad.parquet")
+e3_gam_params_adjalpha_ad <- full_join(ref_metadata_e3, e3_gam_params_adjalpha_ad, by="sample_id")
+
+e3_lextrema_results_gratia_adjalpha_ad <- read_parquet("data-raw/sim/results/lextrema_results_gr_e3_adjalpha_ad.parquet")
+e3_lextrema_results_gratia_adjalpha_ad <- full_join(ref_metadata_e3, e3_lextrema_results_gratia_adjalpha_ad, by="sample_id")
+
+e3_peaktest_results_adjalpha_ad <- read_parquet("data-raw/sim/results/peaktest_results_e3_adjalpha_ad.parquet")
+}
+
+#Exp 1 ad unadjusted ####
+e1_bias <- get_bias2(lextr_me = e1_lextrema_results_me, 
+                     lextr_gr = e1_lextrema_results_gratia, 
+                     func_type = "norm", me = FALSE)
+
+#Exp 2 ad unadjusted ####
+e2_bias <- get_bias(lextr_me = e2_lextrema_results_me,
+                    lextr_gr = e2_lextrema_results_gratia, 
+                    func_type = "norm", 
+                    me = FALSE)
+
+# Exp 3 ad unadjusted ####
+e3_bias <- get_bias(lextr_me = e3_lextrema_results_me,
+                    lextr_gr = e3_lextrema_results_gratia, 
+                    func_type = c("var-p-location", "var-p-skew","var-p-width" ), 
+                    me = FALSE)
+
+# Exp 1-3 TRPS Adj ####
+e1_bias_tprs <- get_bias(lextr_me = e1_lextrema_results_gratia_tprs,
+                    lextr_gr = e1_lextrema_results_gratia_tprs, 
+                    func_type = "norm", 
+                    me = FALSE)
+#exp 2
+e2_bias_tprs <- get_bias(lextr_me = e2_lextrema_results_gratia_tprs,
+                    lextr_gr = e2_lextrema_results_gratia_tprs, 
+                    func_type = "norm", 
+                    me = FALSE)
+  
+# exp 3
+e3_bias_tprs <-get_bias(lextr_me = e3_lextrema_results_gratia_tprs,
+                    lextr_gr = e3_lextrema_results_gratia_tprs, 
+                    func_type = c("var-p-location", "var-p-skew","var-p-width" ), 
+                    me = FALSE)
+
+# Exp 1-4 tprs adjusted ####
+e1_bias_adjalpha <- get_bias(lextr_me = e1_lextrema_results_gratia_adjalpha,
+                                   lextr_gr = e1_lextrema_results_gratia_adjalpha, 
+                                   func_type = "norm", 
+                                   me = FALSE)
+  
+#Exp 2
+e2_bias_adjalpha <- get_bias(lextr_me = e2_lextrema_results_gratia_adjalpha,
+                                   lextr_gr = e2_lextrema_results_gratia_adjalpha, 
+                                   func_type = "norm", 
+                                   me = FALSE)
+
+#exp 3
+e3_bias_adjalpha <- get_bias(lextr_me = e3_lextrema_results_gratia_adjalpha,
+                                   lextr_gr = e3_lextrema_results_gratia_adjalpha, 
+                                   func_type = c("var-p-location", "var-p-skew","var-p-width" ), 
+                                   me = FALSE)
+
+# Exp 1-4 ad adjusted ####
+e1_bias_adjalpha_ad <- get_bias(lextr_me = e1_lextrema_results_gratia_adjalpha_ad,
+                                   lextr_gr = e1_lextrema_results_gratia_adjalpha_ad, 
+                                   func_type = "norm", 
+                                   me = FALSE)
+  
+#Exp 2
+e2_bias_adjalpha_ad <- get_bias(lextr_me = e2_lextrema_results_gratia_adjalpha_ad,
+                                   lextr_gr = e2_lextrema_results_gratia_adjalpha_ad, 
+                                   func_type = "norm", 
+                                   me = FALSE)
+
+#exp 3
+e3_bias_adjalpha_ad <- get_bias(lextr_me = e3_lextrema_results_gratia_adjalpha_ad,
+                                   lextr_gr = e3_lextrema_results_gratia_adjalpha_ad, 
+                                   func_type = c("var-p-location", "var-p-skew","var-p-width" ), 
+                                   me = FALSE)
+
+#export data
+
+bias_all_data <- list(e1_3_bias_ad = list(e1_bias = e1_bias,
+                                          e2_bias= e2_bias,
+                                          e3_bias= e3_bias), 
+                      e1_3_bias_tprs = list(e1_bias_tprs= e1_bias_tprs,
+                                                e2_bias_tprs=e2_bias_tprs,
+                                                e3_bias_tprs=e3_bias_tprs),
+                      e1_3_bias_adjalpha = list(e1_bias_adjalpha=e1_bias_adjalpha,
+                                                e2_bias_adjalpha=e2_bias_adjalpha,
+                                                e3_bias_adjalpha=e3_bias_adjalpha), 
+                      e1_3_bias_adjalpha_ad= list(e1_bias_adjalpha_ad=e1_bias_adjalpha_ad, 
+                                                  e2_bias_adjalpha_ad=e2_bias_adjalpha_ad, 
+                                                  e3_bias_adjalpha_ad=e3_bias_adjalpha_ad))
+
+saveRDS(file = "data-raw/sim/analy_results/bias_all_data", object = bias_all_data)
+```
+
+#Analyse TRPS and adaptive together ####
+```{r}
+#merge adaptive and TPRS adjusted results
+#pivot_longer
+
+pivot_long_no_me <- function(x){
+  x$power <- tidyr::pivot_longer(x$power, 
+                                 cols = c("quad", "rprop", "pr_gr"), 
+                                 names_to = "method", values_to = "power")
+  x$fperror <- tidyr::pivot_longer(x$fperror, 
+                                   cols = c("quad", "rprop", "pr_gr"), 
+                                   names_to = "method", values_to = "power")
+  x$coverage <- tidyr::pivot_longer(x$coverage, 
+                                    cols = c("coverage_gr", "coverage_gr_max"), 
+                                    names_to = "method", values_to = "power")
+
+  return(x)
+}
+e1_4_summary_adjalpha_long <- lapply(e1_4_summary_adjalpha, FUN = pivot_long_no_me)
+e1_4_summary_adjalpha_long$power <- rbind(e1_4_summary_adjalpha_long$e1$power,
+                                          e1_4_summary_adjalpha_long$e2$power,
+                                          e1_4_summary_adjalpha_long$e3$power,
+                                          e1_4_summary_adjalpha_long$e4$power)
+e1_4_summary_adjalpha_long$fperror <- rbind(e1_4_summary_adjalpha_long$e1$fperror,
+                                          e1_4_summary_adjalpha_long$e2$fperror,
+                                          e1_4_summary_adjalpha_long$e3$fperror,
+                                          e1_4_summary_adjalpha_long$e4$fperror)
+e1_4_summary_adjalpha_long$coverage <- rbind(e1_4_summary_adjalpha_long$e1$coverage,
+                                          e1_4_summary_adjalpha_long$e2$coverage,
+                                          e1_4_summary_adjalpha_long$e3$coverage,
+                                          e1_4_summary_adjalpha_long$e4$coverage)
+e1_4_summary_adjalpha_long$precision <- rbind(e1_4_summary_adjalpha_long$e1$precision,
+                                          e1_4_summary_adjalpha_long$e2$precision,
+                                          e1_4_summary_adjalpha_long$e3$precision,
+                                          e1_4_summary_adjalpha_long$e4$precision)
+e1_4_summary_adjalpha_long$bias <- rbind(e1_4_summary_adjalpha_long$e1$bias,
+                                          e1_4_summary_adjalpha_long$e2$bias,
+                                          e1_4_summary_adjalpha_long$e3$bias,
+                                          e1_4_summary_adjalpha_long$e4$bias)
+e1_4_summary_adjalpha_ad_long <- lapply(e1_4_summary_adjalpha_ad, FUN = pivot_long_no_me)
+e1_4_summary_adjalpha_ad_long$power <- rbind(e1_4_summary_adjalpha_ad_long$e1$power,
+                                          e1_4_summary_adjalpha_ad_long$e2$power,
+                                          e1_4_summary_adjalpha_ad_long$e3$power,
+                                          e1_4_summary_adjalpha_ad_long$e4$power)
+e1_4_summary_adjalpha_ad_long$fperror <- rbind(e1_4_summary_adjalpha_ad_long$e1$fperror,
+                                          e1_4_summary_adjalpha_ad_long$e2$fperror,
+                                          e1_4_summary_adjalpha_ad_long$e3$fperror,
+                                          e1_4_summary_adjalpha_ad_long$e4$fperror)
+e1_4_summary_adjalpha_ad_long$coverage <- rbind(e1_4_summary_adjalpha_ad_long$e1$coverage,
+                                          e1_4_summary_adjalpha_ad_long$e2$coverage,
+                                          e1_4_summary_adjalpha_ad_long$e3$coverage,
+                                          e1_4_summary_adjalpha_ad_long$e4$coverage)
+e1_4_summary_adjalpha_ad_long$precision <- rbind(e1_4_summary_adjalpha_ad_long$e1$precision,
+                                          e1_4_summary_adjalpha_ad_long$e2$precision,
+                                          e1_4_summary_adjalpha_ad_long$e3$precision,
+                                          e1_4_summary_adjalpha_ad_long$e4$precision)
+e1_4_summary_adjalpha_ad_long$bias <- rbind(e1_4_summary_adjalpha_ad_long$e1$bias,
+                                          e1_4_summary_adjalpha_ad_long$e2$bias,
+                                          e1_4_summary_adjalpha_ad_long$e3$bias,
+                                          e1_4_summary_adjalpha_ad_long$e4$bias)
+
+
+results_adj_alpha <- list()
+results_adj_alpha$power <- bind_rows(e1_4_summary_adjalpha_long$power, 
+                                 e1_4_summary_adjalpha_ad_long$power, .id="source")
+results_adj_alpha$fperror <- bind_rows(e1_4_summary_adjalpha_long$fperror,
+                                   e1_4_summary_adjalpha_ad_long$fperror, .id="source")
+results_adj_alpha$coverage <- bind_rows(e1_4_summary_adjalpha_long$coverage,
+                                    e1_4_summary_adjalpha_ad_long$coverage, .id="source")
+results_adj_alpha$precision <- bind_rows(e1_4_summary_adjalpha_long$precision, 
+                          e1_4_summary_adjalpha_ad_long$precision, .id="source")
+results_adj_alpha$bias <- bind_rows(e1_4_summary_adjalpha_long$bias, 
+                          e1_4_summary_adjalpha_ad_long$bias, .id="source")
+
+```
+
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
 
 
 ```{r}
@@ -1212,3 +1799,4 @@ saveRDS(e1_4_summary_adjalpha_ad, "data-raw/sim/analy_results/e1_4_summary_adjal
 
 
 ```
+
