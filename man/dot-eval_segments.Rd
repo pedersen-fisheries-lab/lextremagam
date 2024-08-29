@@ -4,7 +4,7 @@
 \alias{.eval_segments}
 \title{Evaluate  sections}
 \usage{
-.eval_segments(est_slopes, var)
+.eval_segments(est_slopes, var, deriv_method)
 }
 \arguments{
 \item{est_slopes}{gam model object to be evaluated}

@@ -8,6 +8,8 @@
 #'
 #' @param quant_segments a lextrema object produced by the function quantify_lextrema
 #' @param plot_deriv boolean TRUE/FALSE if the first derivative should be plotted
+#' @param show_segs which segment types to show. see lextremagam::feature_codes for the options
+#' @param show_segs_deriv TRUE/FALSE if the derivative plot should be produced
 #'
 #' @returns a ggplot object
 #' @export plot_lextrema
@@ -31,13 +33,12 @@ plot_lextrema <- function(quant_segments, plot_deriv = TRUE, show_segs=c("local_
   new_x <-  dplyr::select(quant_segments$model_slopes, quant_segments$var)
 
   if(quant_segments$deriv_method == "gratia"){
-    colnames(quant_segments$model_slopes)[which(colnames(quant_segments$model_slopes)=="lower")] <- "conf.low"
-    colnames(quant_segments$model_slopes)[which(colnames(quant_segments$model_slopes)=="upper")] <- "conf.high"
-    colnames(quant_segments$model_slopes)[which(colnames(quant_segments$model_slopes)=="derivative")] <- "estimate"
+    colnames(quant_segments$model_slopes)[which(colnames(quant_segments$model_slopes)==".lower_ci")] <- "conf.low"
+    colnames(quant_segments$model_slopes)[which(colnames(quant_segments$model_slopes)==".upper_ci")] <- "conf.high"
+    colnames(quant_segments$model_slopes)[which(colnames(quant_segments$model_slopes)==".derivative")] <- "estimate"
 
     predicted <- predict.gam(object = quant_segments$model, type = "link", newdata = new_x)
 
-    colnames(quant_segments$model_slopes)[which(colnames(quant_segments$model_slopes)=="data")] <- quant_segments$var
     quant_segments$model_slopes$predicted <- predicted
     }
 
@@ -54,15 +55,17 @@ plot_lextrema <- function(quant_segments, plot_deriv = TRUE, show_segs=c("local_
     if(show_segs_deriv){
       deriv_plot <- ggplot2::ggplot(data=quant_segments$model_slopes)+
         ggplot2::geom_line(
-          ggplot2::aes(x=x, y=estimate))+
-        ggplot2::geom_ribbon(ggplot2::aes(x=x, ymin=conf.low, ymax=conf.high, group = seg_id, fill = feature), alpha=0.25)+
+          ggplot2::aes(x=unlist(dplyr::select(quant_segments$model_slopes, quant_segments$var)),
+                       y=estimate))+
+        ggplot2::geom_ribbon(ggplot2::aes(x=unlist(dplyr::select(quant_segments$model_slopes, quant_segments$var)),
+                                          ymin=conf.low, ymax=conf.high, group = seg_id, fill = feature), alpha=0.25)+
         ggplot2::geom_hline(ggplot2::aes(yintercept=0), linetype=3, colour="grey40", linewidth=1.1)+
         ggplot2::theme_bw()
     } else{
       deriv_plot <- ggplot2::ggplot(data=quant_segments$model_slopes)+
         ggplot2::geom_line(
-          ggplot2::aes(x=x, y=estimate))+
-        ggplot2::geom_ribbon(ggplot2::aes(x=x, ymin=conf.low, ymax=conf.high), fill="black", alpha=0.25)+
+          ggplot2::aes(x=unlist(dplyr::select(quant_segments$model_slopes, quant_segments$var)), y=estimate))+
+        ggplot2::geom_ribbon(ggplot2::aes(x=unlist(dplyr::select(quant_segments$model_slopes, quant_segments$var)), ymin=conf.low, ymax=conf.high), fill="black", alpha=0.25)+
         ggplot2::geom_hline(ggplot2::aes(yintercept=0), linetype=3, colour="grey40", linewidth=1.1)+
         ggplot2::theme_bw()
     }
