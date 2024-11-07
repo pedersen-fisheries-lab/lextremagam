@@ -148,6 +148,89 @@ quantify_lextrema2 <- function(mod, var = NULL, step_size = NULL, conf_level= 0.
 
 #' Estimate the first derivative
 #'
+#' Evaluates the first derivative at a given (very small) step size for a given gam model input. Using frequentist posterior covariance matrix. Note: THIS FUNCTION IS CURRENTLY UNIVARIATE
+#'
+#' @param mod gam model object to be evaluated
+#' @param var predictor variable over which the slope is evaluated
+#' @param step_size the step size at which to evaluate the first derivative
+#' @param conf_level the confidence level (between 0 and 1) at which the confidence interval of the first derivative is estimated
+#' @param deriv_method whether to use gratia's derivatives function or marginaleffects' slopes function
+#'
+#' @returns a slopes object dataframe built by marginaleffects::slopes, including the model rowid, term, estimate, std.error, conf.low, conf.high, y, x
+#' @export quantify_lextrema_freq
+quantify_lextrema_freq <- function(mod, var = NULL, step_size = NULL, conf_level= 0.95, deriv_method = "gratia"){
+  deriv_method <- match.arg(deriv_method)
+  #Error management
+  #general checks
+  stopifnot( any(class(mod)=="gam"),
+             var %in% gratia::model_vars(mod),
+             is.numeric(step_size) | is.null(step_size),
+             is.numeric(conf_level),
+             conf_level >0 & conf_level < 1)
+
+  if (! any(class(mod) == "gam")) {
+    warning("Your mod object does not seem to be a gam. This method has not been tested on non-gam objects and may not operate well")
+  }
+
+  #Makeing sure the model is univariate
+  if(length(gratia::model_vars(mod))>1){
+    stop("this is a multivariate model. The function is currently only set up to handle univariate models")
+  }
+
+  #variable management
+  #Checking the step-size
+  if (is.null(step_size)){
+    range <- max(mod$model[2])- min(mod$model[2])
+    unique_x <- nrow(unique(mod$model[2])) - 1 #not quite
+
+    avg_inp_step_size <- range/unique_x
+
+    step_size <- avg_inp_step_size/100
+    warning(paste0("step_size not defined. step_size will be defined as the average x interval between datapoints/100. Step_size = ", step_size))
+  }
+  if(is.numeric(step_size)){
+    if(step_size <= 0){
+      stop("step_size must be a numeric value greater than 0.")
+    }
+  }
+
+  #Extracting the predictor variable name
+  if(is.null(var)){
+    var <- gratia::model_vars(mod)[1]
+    warning(paste0("No specific predictor variable was set. The first predictor was extracted. Evaluating the slope of: ", var))
+  }
+
+  #generating predictor values to evaluate
+  new_x <-  data.frame(x= seq(min(mod$model[2]), max(mod$model[2]), by=step_size))
+  names(new_x) <- var
+
+  #getting first derivative estimates
+  if (deriv_method == "gratia"){
+    #default returns on link scale
+    est_slopes <- gratia::derivatives(object = mod,
+                                      data = new_x,
+                                      order=1,
+                                      type = "central",
+                                      interval = "confidence",
+                                      level = conf_level,
+                                      frequentist = TRUE)
+  }else{
+    stop("invalid deriv_method. Must be \"gratia\".")
+  }
+
+  #characterizing the curve segments
+  quant_segments <- find_segments(est_slopes, var, deriv_method)
+  quant_segments$model <- mod
+  quant_segments$var <- var
+  quant_segments$deriv_method <- deriv_method
+
+  class(quant_segments) <- c("lextrema", class(quant_segments))
+
+  return(quant_segments)
+}
+
+#' Estimate the first derivative
+#'
 #' Evaluates the first derivative at a given (very small) step size for a given gam model input. Note: THIS FUNCTION IS CURRENTLY UNIVARIATE
 #'
 #' @param mod gam model object to be evaluated

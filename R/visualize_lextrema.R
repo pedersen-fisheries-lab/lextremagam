@@ -26,6 +26,9 @@ plot_lextrema <- function(quant_segments, plot_deriv = TRUE, show_segs=c("local_
       stop(paste0("all show_segs values must be codes represented in the approved feature codes: ", paste0(feature_codes, collapse = ", ")))
     }
   }
+  if(length(gratia::model_vars(mod))>1){
+    stop("Sorry, plot_lextrema is not yet updated to visualize results from multivariate models")
+  }
   if(any(show_segs == "all")){
     show_segs <- feature_codes
   }
