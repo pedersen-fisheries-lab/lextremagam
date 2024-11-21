@@ -1172,28 +1172,28 @@ ggplot(data=filter(e1_4_summary_adjalpha_ad$e3$precision, func =="var-p-width"))
 
 # BIAS ####
 ggplot(data=filter(bias_all_data$e1_3_bias_adjalpha_ad$e1_bias_adjalpha_ad, func== "norm"))+
-  geom_point(aes(x=dup, y=bias_avg_gr))+
-  geom_line(aes(x=dup, y=bias_avg_gr))+
-  geom_ribbon(aes(x = dup, ymin=bias_avg_gr-bias_sd_gr, ymax=bias_avg_gr+bias_sd_gr), alpha=0.2)+
+  geom_point(aes(x=dup, y=bias_avg_gr_max))+
+  geom_line(aes(x=dup, y=bias_avg_gr_max))+
+  geom_ribbon(aes(x = dup, ymin=bias_avg_gr_max-bias_sd_gr_max, ymax=bias_avg_gr_max+bias_sd_gr_max), alpha=0.2)+
   geom_hline(aes( yintercept=0), linetype=2)
 
 ggplot(data=filter(bias_all_data$e1_3_bias_adjalpha_ad$e2_bias_adjalpha_ad, func== "norm"))+
-  geom_point(aes(x=error, y=bias_avg_gr))+
-  geom_line(aes(x=error, y=bias_avg_gr))+
-  geom_ribbon(aes(x = error, ymin=bias_avg_gr-bias_sd_gr, ymax=bias_avg_gr+bias_sd_gr), alpha=0.2)+
+  geom_point(aes(x=error, y=bias_avg_gr_max))+
+  geom_line(aes(x=error, y=bias_avg_gr_max))+
+  geom_ribbon(aes(x = error, ymin=bias_avg_gr_max-bias_sd_gr_max, ymax=bias_avg_gr_max+bias_sd_gr_max), alpha=0.2)+
   geom_hline(aes(yintercept=0), linetype=2)
 
 ggplot(data=filter(bias_all_data$e1_3_bias_adjalpha_ad$e3_bias_adjalpha_ad, func!= "var-p-width"))+
-  geom_point(aes(x=peak, y=bias_avg_gr, colour=as.factor(dup)))+
-  geom_line(aes(x=peak, y=bias_avg_gr, colour=as.factor(dup)))+
-  geom_ribbon(aes(x = peak, ymin=bias_avg_gr-bias_sd_gr, ymax=bias_avg_gr+bias_sd_gr, fill=as.factor(dup)), alpha=0.1)+
+  geom_point(aes(x=peak, y=bias_avg_gr_max, colour=as.factor(dup)))+
+  geom_line(aes(x=peak, y=bias_avg_gr_max, colour=as.factor(dup)))+
+  geom_ribbon(aes(x = peak, ymin=bias_avg_gr_max-bias_sd_gr_max, ymax=bias_avg_gr_max+bias_sd_gr_max, fill=as.factor(dup)), alpha=0.1)+
   geom_hline(aes( yintercept=0), linetype=2)+
 facet_wrap(~func)
 
 ggplot(data=filter(bias_all_data$e1_3_bias_adjalpha_ad$e3_bias_adjalpha_ad, func== "var-p-width"))+
-  geom_point(aes(x=param, y=bias_avg_gr, colour=as.factor(dup)))+
-  geom_line(aes(x=param, y=bias_avg_gr, colour=as.factor(dup)))+
-  geom_ribbon(aes(x = param, ymin=bias_avg_gr-bias_sd_gr, ymax=bias_avg_gr+bias_sd_gr, fill=as.factor(dup)), alpha=0.1)+
+  geom_point(aes(x=param, y=bias_avg_gr_max, colour=as.factor(dup)))+
+  geom_line(aes(x=param, y=bias_avg_gr_max, colour=as.factor(dup)))+
+  geom_ribbon(aes(x = param, ymin=bias_avg_gr_max-bias_sd_gr_max, ymax=bias_avg_gr_max+bias_sd_gr_max, fill=as.factor(dup)), alpha=0.1)+
   geom_hline(aes( yintercept=0), linetype=2)+
 facet_wrap(~func)
 
@@ -1319,66 +1319,66 @@ e1_bias <- get_bias2(lextr_me = e1_lextrema_results_me,
                      func_type = "norm", me = FALSE)
 
 #Exp 2 ad unadjusted ####
-e2_bias <- get_bias(lextr_me = e2_lextrema_results_me,
+e2_bias <- get_bias2(lextr_me = e2_lextrema_results_me,
                     lextr_gr = e2_lextrema_results_gratia, 
                     func_type = "norm", 
                     me = FALSE)
 
 # Exp 3 ad unadjusted ####
-e3_bias <- get_bias(lextr_me = e3_lextrema_results_me,
+e3_bias <- get_bias2(lextr_me = e3_lextrema_results_me,
                     lextr_gr = e3_lextrema_results_gratia, 
                     func_type = c("var-p-location", "var-p-skew","var-p-width" ), 
                     me = FALSE)
 
 # Exp 1-3 TRPS Adj ####
-e1_bias_tprs <- get_bias(lextr_me = e1_lextrema_results_gratia_tprs,
+e1_bias_tprs <- get_bias2(lextr_me = e1_lextrema_results_gratia_tprs,
                     lextr_gr = e1_lextrema_results_gratia_tprs, 
                     func_type = "norm", 
                     me = FALSE)
 #exp 2
-e2_bias_tprs <- get_bias(lextr_me = e2_lextrema_results_gratia_tprs,
+e2_bias_tprs <- get_bias2(lextr_me = e2_lextrema_results_gratia_tprs,
                     lextr_gr = e2_lextrema_results_gratia_tprs, 
                     func_type = "norm", 
                     me = FALSE)
   
 # exp 3
-e3_bias_tprs <-get_bias(lextr_me = e3_lextrema_results_gratia_tprs,
+e3_bias_tprs <-get_bias2(lextr_me = e3_lextrema_results_gratia_tprs,
                     lextr_gr = e3_lextrema_results_gratia_tprs, 
                     func_type = c("var-p-location", "var-p-skew","var-p-width" ), 
                     me = FALSE)
 
 # Exp 1-4 tprs adjusted ####
-e1_bias_adjalpha <- get_bias(lextr_me = e1_lextrema_results_gratia_adjalpha,
+e1_bias_adjalpha <- get_bias2(lextr_me = e1_lextrema_results_gratia_adjalpha,
                                    lextr_gr = e1_lextrema_results_gratia_adjalpha, 
                                    func_type = "norm", 
                                    me = FALSE)
   
 #Exp 2
-e2_bias_adjalpha <- get_bias(lextr_me = e2_lextrema_results_gratia_adjalpha,
+e2_bias_adjalpha <- get_bias2(lextr_me = e2_lextrema_results_gratia_adjalpha,
                                    lextr_gr = e2_lextrema_results_gratia_adjalpha, 
                                    func_type = "norm", 
                                    me = FALSE)
 
 #exp 3
-e3_bias_adjalpha <- get_bias(lextr_me = e3_lextrema_results_gratia_adjalpha,
+e3_bias_adjalpha <- get_bias2(lextr_me = e3_lextrema_results_gratia_adjalpha,
                                    lextr_gr = e3_lextrema_results_gratia_adjalpha, 
                                    func_type = c("var-p-location", "var-p-skew","var-p-width" ), 
                                    me = FALSE)
 
 # Exp 1-4 ad adjusted ####
-e1_bias_adjalpha_ad <- get_bias(lextr_me = e1_lextrema_results_gratia_adjalpha_ad,
+e1_bias_adjalpha_ad <- get_bias2(lextr_me = e1_lextrema_results_gratia_adjalpha_ad,
                                    lextr_gr = e1_lextrema_results_gratia_adjalpha_ad, 
                                    func_type = "norm", 
                                    me = FALSE)
   
 #Exp 2
-e2_bias_adjalpha_ad <- get_bias(lextr_me = e2_lextrema_results_gratia_adjalpha_ad,
+e2_bias_adjalpha_ad <- get_bias2(lextr_me = e2_lextrema_results_gratia_adjalpha_ad,
                                    lextr_gr = e2_lextrema_results_gratia_adjalpha_ad, 
                                    func_type = "norm", 
                                    me = FALSE)
 
 #exp 3
-e3_bias_adjalpha_ad <- get_bias(lextr_me = e3_lextrema_results_gratia_adjalpha_ad,
+e3_bias_adjalpha_ad <- get_bias2(lextr_me = e3_lextrema_results_gratia_adjalpha_ad,
                                    lextr_gr = e3_lextrema_results_gratia_adjalpha_ad, 
                                    func_type = c("var-p-location", "var-p-skew","var-p-width" ), 
                                    me = FALSE)
@@ -1398,7 +1398,7 @@ bias_all_data <- list(e1_3_bias_ad = list(e1_bias = e1_bias,
                                                   e2_bias_adjalpha_ad=e2_bias_adjalpha_ad, 
                                                   e3_bias_adjalpha_ad=e3_bias_adjalpha_ad))
 
-saveRDS(file = "data-raw/sim/analy_results/bias_all_data", object = bias_all_data)
+saveRDS(file = "data-raw/sim/analy_results/bias_all_data.RDS", object = bias_all_data)
 ```
 
 #Analyse TRPS and adaptive together ####
