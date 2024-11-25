@@ -54,3 +54,7 @@ inst/doc
 
 #log files
 data-raw/sim/
+
+data-raw/real_data/
+
+e1_4_tprs_adj_ad_plots.pdf
