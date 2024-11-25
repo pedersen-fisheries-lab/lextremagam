@@ -2,7 +2,7 @@
 % Please edit documentation in R/quantify_lextrema.R
 \name{quantify_lextrema2}
 \alias{quantify_lextrema2}
-\title{Estimate the first derivative - alpha-corrected}
+\title{NOT TO BE USED Estimate the first derivative - alpha-corrected}
 \usage{
 quantify_lextrema2(
   mod,
@@ -11,7 +11,8 @@ quantify_lextrema2(
   conf_level = 0.95,
   deriv_method = c("gratia", "marginaleffects"),
   multivariate = FALSE,
-  smooth = NULL
+  smooth = NULL,
+  frequentist = FALSE
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ quantify_lextrema2(
 \item{multivariate}{TRUE/FALSE if the model to be evaluated is multivariate}
 
 \item{smooth}{name of the smooth in the format \"s(...)\"}
+
+\item{, }{if using gratia::derivatives, TRUE/FALSE boolean whether or not the derivatives are calculated using the bayesian (default) or frequentist covariance matriz}
 }
 \value{
 a slopes object dataframe built by marginaleffects::slopes, including the model rowid, term, estimate, std.error, conf.low, conf.high, y, x

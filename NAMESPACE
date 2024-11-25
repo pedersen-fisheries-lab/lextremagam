@@ -3,4 +3,4 @@
 export(find_segments)
 export(plot_lextrema)
 export(quantify_lextrema)
-export(quantify_lextrema2)
+export(quantify_lextrema_multivar)

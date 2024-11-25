@@ -9,7 +9,8 @@ quantify_lextrema(
   var = NULL,
   step_size = NULL,
   conf_level = 0.95,
-  deriv_method = c("gratia", "marginaleffects")
+  deriv_method = c("gratia", "marginaleffects"),
+  frequentist = FALSE
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ quantify_lextrema(
 \item{conf_level}{the confidence level (between 0 and 1) at which the confidence interval of the first derivative is estimated}
 
 \item{deriv_method}{whether to use gratia's derivatives function or marginaleffects' slopes function}
+
+\item{, }{if using gratia::derivatives, TRUE/FALSE boolean whether or not the derivatives are calculated using the bayesian (default) or frequentist covariance matriz\x}
 }
 \value{
 a slopes object dataframe built by marginaleffects::slopes, including the model rowid, term, estimate, std.error, conf.low, conf.high, y, x
