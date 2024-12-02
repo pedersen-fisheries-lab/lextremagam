@@ -196,7 +196,7 @@ get_coverage <- function(lextr_me, lextr_gr, func_type, me = TRUE){
     left_join( coverage_gr_max, by=c("scenario_id", "func", "param", "error", "dup"))
   if(me){
   coverage <- coverage%>%
-    left_join( coverage_me, by=c("scenario_id", "func", "param", "error", "dup"))%>%
+    left_join( coverage_me, by=c("scenario_id", "func", "param", "error", "dup", "peak"))%>%
     left_join( coverage_me_max, by=c("scenario_id", "func", "param", "error", "dup"))
   }
   
@@ -865,7 +865,6 @@ ggplot(data=filter(tidyr::pivot_longer(e1_4_summary_adjalpha$e3$power, cols = c(
   geom_point(aes(x=peak, y=power, colour=method))+
   geom_line(aes(x=peak, y=power, colour=method))+
   facet_grid(dup~func)
-ggplot(data=filter(tidyr::pivot_longer(e1_4_summary_adjalpha$e3$power, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "power"), func=="var-p-width"))+
   geom_point(aes(x=param, y=power, colour=method))+
   geom_line(aes(x=param, y=power, colour=method))+
   facet_grid(dup~func)

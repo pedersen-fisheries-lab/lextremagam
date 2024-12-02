@@ -225,7 +225,8 @@ quantify_lextrema <- function(mod, var = NULL, step_size = NULL, conf_level= 0.9
                                       order=1,
                                       type = "central",
                                       interval = "confidence",
-                                      level = conf_level)
+                                      level = conf_level,
+                                      frequentist=frequentist)
   }else{
     stop("invalid deriv_method. Must be \"gratia\" or \"marginaleffects\".")
   }

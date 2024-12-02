@@ -15,8 +15,9 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup}
-.libPaths("/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2", include.site = FALSE)
+#.libPaths("/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2", include.site = FALSE)
 library(rlang)
+library(mgcv)
 library(arrow)
 library(dplyr)
 library(lextremagam)
@@ -42,9 +43,7 @@ library(purrr )#import data to run gams
 ```
 
 ```{r}
-run_analyses <- function(sim_data, logname, gam_type = "ad", me = TRUE, alpha = 0.05){ 
-  .libPaths("/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2", include.site = FALSE)
-
+run_analyses_freq <- function(sim_data, logname, gam_type = "ad", me = TRUE, alpha = 0.05){ 
   sim_data <- sim_data
   #using the user-defined logname to set up a new parallel processing logging file
   log_file <- paste0("data-raw/sim/analysis_logs/", logname, ".txt")
@@ -54,19 +53,19 @@ run_analyses <- function(sim_data, logname, gam_type = "ad", me = TRUE, alpha = 
   
   #Parallel processing using the sim_data passed in the function
   sim_dat_detect_results_list <- foreach (i = unique(sim_data$sample_id) #iterating for each ID number
-                                          )%dopar% {
+                                          )%do% {
                                             #.packages=c("rlang",'dplyr', 'lextremagam','pracma', "mgcv", "gratia" , "marginaleffects")
       cat(paste0(Sys.time(), ",Iteration Start,", "Sample ID,", i,  ",Time since foreach loop start,", as.numeric(Sys.time())-start_time, "\n" ), file=log_file, append=TRUE)
-
-  .libPaths("/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2", include.site = FALSE)
-
-  library("rlang", lib.loc = "/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2")
-  library("dplyr", lib.loc = "/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2")
-  library("lextremagam", lib.loc = "/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2")
-  library("pracma", lib.loc = "/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2")
-  library("mgcv", lib.loc = "/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2")
-  library("gratia", lib.loc = "/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2")
-  library("marginaleffects", lib.loc = "/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2")
+# 
+#   .libPaths("/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2", include.site = FALSE)
+# 
+#   library("rlang", lib.loc = "/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2")
+#   library("dplyr", lib.loc = "/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2")
+#   library("lextremagam", lib.loc = "/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2")
+#   library("pracma", lib.loc = "/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2")
+#   library("mgcv", lib.loc = "/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2")
+#   library("gratia", lib.loc = "/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2")
+#   library("marginaleffects", lib.loc = "/home/n_dup/R/x86_64-pc-linux-gnu-library/4.2")
                                             
 #merges list output into a dataframe, where each iteration output is a row
                                             
@@ -226,23 +225,120 @@ run_analyses <- function(sim_data, logname, gam_type = "ad", me = TRUE, alpha = 
 ```{r}
 # import data
 setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
-#setwd("~/Documents/Pedersen2023/Peaks/lextremagam")
 sim_dat_e1 <- read_parquet(file = "data-raw/sim/data/sim_dat_e1.parquet")
+sim_dat_e1 <- filter(sim_dat_e1, func == "norm")
 
-sim_dat_e1 <- filter(sim_dat_e1, rep <=1000, dup == 3, func=="norm")
-start_e1 <- Sys.time()
-sim_e1_results <- run_analyses_freq(sim_data = sim_dat_e1, logname = "sim_dat_e1_log", me = FALSE)
-#test <- run_analyses(sim_data = filter(sim_dat_e1, rep<=2), logname = "test")
-end_e1 <- Sys.time()
+for( i in unique(sim_dat_e1$scenario_id)){
+  print(i)
+  sim_dat_e1_i <- filter(sim_dat_e1, scenario_id==i)
+  logname <- paste0("sim_dat_e1_freq_tprs", i, "_log")
+  start_e1 <- Sys.time()
+  sim_e1_i_results <- run_analyses_freq(sim_data = sim_dat_e1_i, logname = logname, me = FALSE, gam_type = "tprs")
 
-write_parquet(sim_e1_results$lextrema_results_gr, sink =  "data-raw/sim/results/lextrema_results_gr_e1_freq.parquet")
-write_parquet(sim_e1_results$gam_params, sink =  "data-raw/sim/results/gam_params_e1_freq.parquet")
-write_parquet(sim_e1_results$peaktest_results, sink =  "data-raw/sim/results/peaktest_results_e1_freq.parquet")
+  saveRDS(object = sim_e1_i_results, file = paste0("data-raw/sim/results/freq/e1_freq_tprs", i, "_results.RDS"))
+  end_e1 <- Sys.time()
+  print(end_e1-start_e1)
 
-lextrema_results_freq <- left_join(sim_e1_results$lextrema_results_gr, summarize(group_by(sim_dat_e1, func, param, rep, error, dup, sample_id, scenario_id), n=n()), by = "sample_id")
-lextrema_results_freq$peak <- 0.5
+}
+
+for( i in unique(sim_dat_e1$scenario_id)){
+  print(i)
+  sim_dat_e1_i <- filter(sim_dat_e1, scenario_id==i)
+  logname <- paste0("sim_dat_e1_freq_ad", i, "_log")
+  start_e1 <- Sys.time()
+  sim_e1_i_results <- run_analyses_freq(sim_data = sim_dat_e1_i, logname = logname, me = FALSE, gam_type = "ad")
+
+  saveRDS(object = sim_e1_i_results, file = paste0("data-raw/sim/results/freq/e1_freq_ad", i, "_results.RDS"))
+  end_e1 <- Sys.time()
+  print(end_e1-start_e1)
+  
+}
+
+#lextrema_results_freq <- left_join(sim_e1_results$lextrema_results_gr, summarize(group_by(sim_dat_e1, func, param, rep, error, dup, sample_id, scenario_id), n=n()), by = "sample_id")
+
+all_freq_names <- list.files(path = "data-raw/sim/results/freq/", full.names = TRUE)
+all_freq_names_ad <- all_freq_names[1:5]
+all_freq_names_tprs <- all_freq_names[6:10]
+
+all_freq_ad <- lapply(all_freq_names_ad, readRDS)
+all_freq_tprs <- lapply(all_freq_names_tprs, readRDS)
+
+peaktest_results_freq_ad <- bind_rows(map(all_freq_ad, "peaktest_results"))
+peaktest_results_freq_tprs <- bind_rows(map(all_freq_tprs, "peaktest_results"))
+
+lextrema_results_gr_freq_ad <- bind_rows(map(all_freq_ad, "lextrema_results_gr"))
+lextrema_results_gr_freq_tprs <- bind_rows(map(all_freq_tprs, "lextrema_results_gr"))
+
+gam_params_freq_ad <- bind_rows(map(all_freq_ad, "gam_params"))
+gam_params_freq_tprs <- bind_rows(map(all_freq_tprs, "gam_params"))
+
+write_parquet(x = peaktest_results_freq_ad, sink = "data-raw/sim/results/freq/peaktest_results_e1_freq_ad.parquet")
+write_parquet(x = peaktest_results_freq_tprs, sink = "data-raw/sim/results/freq/peaktest_results_e1_freq_tprs.parquet")
+
+write_parquet(x = lextrema_results_gr_freq_ad, sink = "data-raw/sim/results/freq/lextrema_results_gr_e1_freq_ad.parquet")
+write_parquet(x = lextrema_results_gr_freq_tprs, sink = "data-raw/sim/results/freq/lextrema_results_gr_e1_freq_tprs.parquet")
+
+write_parquet(x = gam_params_freq_ad, sink = "data-raw/sim/results/freq/gam_params_e1_freq_ad.parquet")
+write_parquet(x = gam_params_freq_tprs, sink = "data-raw/sim/results/freq/gam_params_e1_freq_tprs.parquet")
 
 
+```
+
+#getting the results. For this chunk, load the function in script S03
+```{r}
+
+if(!exists("ref_metadata_e1")){
+sim_dat_e1 <- read_parquet("data-raw/sim/data/sim_dat_e1.parquet")
+  #adding reference data
+  ref_metadata_e1 <- sim_dat_e1%>%
+    group_by(func, param, rep, error, dup, scenario_id)%>%
+    summarize(sample_id=first(sample_id))%>%
+        mutate(peak = case_when(func=="norm"~param,
+                            func == "linear"~NA))%>%
+    ungroup()
+}
+
+#Adaptive splines
+e1_peaktest_results_freq_ad <- read_parquet("data-raw/sim/results/freq/peaktest_results_e1_freq_ad.parquet")
+#e1_peaktest_results_freq_ad <- full_join(ref_metadata_e1, e1_peaktest_results_freq_ad, by="sample_id")
+
+e1_lextrema_results_gr_freq_ad <- read_parquet("data-raw/sim/results/freq/lextrema_results_gr_e1_freq_ad.parquet")
+e1_lextrema_results_gr_freq_ad <- full_join(ref_metadata_e1, e1_lextrema_results_gr_freq_ad, by="sample_id")
+
+e1_gam_params_freq_ad <- read_parquet("data-raw/sim/results/freq/gam_params_e1_freq_ad.parquet")
+e1_gam_params_freq_ad <- full_join(ref_metadata_e1, e1_gam_params_freq_ad, by="sample_id")
+
+
+e1_summary_freq_ad <- get_results(peak_test = e1_peaktest_results_freq_ad,
+                          lextr_me =e1_lextrema_results_gr_freq_ad, 
+                          lextr_gr =  e1_lextrema_results_gr_freq_ad, 
+                          gam_params = e1_gam_params_freq_ad, 
+                          func_type_p = "norm", 
+                          func_type_np = "linear",
+                          me = FALSE)
+saveRDS(e1_summary_freq_ad, "data-raw/sim/analy_results/e1_summary_ad_freq.RDS")
+
+
+#Thin-plate splines
+e1_peaktest_results_freq_tprs <- read_parquet("data-raw/sim/results/freq/peaktest_results_e1_freq_tprs.parquet")
+#e1_peaktest_results_freq_tprs <- full_join(ref_metadata_e1, e1_peaktest_results_freq_tprs, by="sample_id")
+
+e1_lextrema_results_gr_freq_tprs <- read_parquet("data-raw/sim/results/freq/lextrema_results_gr_e1_freq_tprs.parquet")
+e1_lextrema_results_gr_freq_tprs <- full_join(ref_metadata_e1, e1_lextrema_results_gr_freq_tprs, by="sample_id")
+
+e1_gam_params_freq_tprs <- read_parquet("data-raw/sim/results/freq/gam_params_e1_freq_tprs.parquet")
+e1_gam_params_freq_tprs <- full_join(ref_metadata_e1, e1_gam_params_freq_tprs, by="sample_id")
+
+
+e1_summary_freq_tprs <- get_results(peak_test = e1_peaktest_results_freq_tprs,
+                          lextr_me =e1_lextrema_results_gr_freq_tprs, 
+                          lextr_gr =  e1_lextrema_results_gr_freq_tprs, 
+                          gam_params = e1_gam_params_freq_tprs, 
+                          func_type_p = "norm", 
+                          func_type_np = "linear",
+                          me = FALSE)
+
+saveRDS(e1_summary_freq_tprs, "data-raw/sim/analy_results/e1_summary_tprs_freq.RDS")
 ```
 
 ```{r}
@@ -275,11 +371,6 @@ lextrema_results_freq$peak <- 0.5
 #   
 # coverage <- coverage_gr%>%
 #     left_join( coverage_gr_max, by=c("scenario_id", "func", "param", "error", "dup"))
-
-
-```
-
-```{r}
 ```
 
 ```{r}
