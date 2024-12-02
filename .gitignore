@@ -53,7 +53,12 @@ rsconnect/
 inst/doc
 
 #log files
-data-raw/sim/
+data-raw/sim/analysis_logs
+data-raw/sim/results
+data-raw/sim/results/Archive_2024-11-28.zip
+data-raw/sim/data
+
+
 
 data-raw/real_data/
 
