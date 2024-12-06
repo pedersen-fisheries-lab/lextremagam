@@ -126,10 +126,35 @@ plot_lextrema <- function(quant_segments, plot_deriv = TRUE, show_segs=c("local_
   }
 
   new_x <-  dplyr::select(quant_segments$model_slopes, quant_segments$var)
-  #add all other variables here
-  for(i in 2:length(gratia::model_vars(quant_segments$model))){
-    new_x[, i] <- mean(quant_segments$model$model[, i])
+  by <- quant_segments$model_slopes$.by[1]
+  if(!is.na(by)){
+    by <- dplyr::select(quant_segments$model_slopes, by)
+    new_x <- cbind(new_x, by)
   }
+
+  #add all other variables here
+  # if(ncol(new_x)< I(ncol(quant_segments$model$model) - 1)) {
+  #   for(i in I(ncol(new_x)+2):ncol(quant_segments$model$model)){
+  #     if(is.numeric(quant_segments$model$model[, i])){
+  #       new_x[, i] <- mean(quant_segments$model$model[, i])
+  #     } else if (is.factor(quant_segments$model$model[, i]) | is.character(quant_segments$model$model[, i])){
+  #       new_x[, i] <- first(quant_segments$model$model[, i])
+  #     }
+  #     colnames(new_x)[i-1] <- colnames(quant_segments$model$model)[i]
+  #   }
+  # }
+
+  if(ncol(new_x)< I(ncol(quant_segments$model$model) - 1)) {
+    for(i in colnames(quant_segments$model$model)[-1]){
+      if(is.numeric(dplyr::select(quant_segments$model$model, i)[,1])){
+        new_x <- dplyr::mutate(new_x, new_var = mean(dplyr::select(quant_segments$model$model, i)[,1]))
+      } else if (is.factor(dplyr::select(quant_segments$model$model, i)[,1]) | is.character(dplyr::select(quant_segments$model$model, i)[,1])){
+        new_x <- dplyr::mutate(new_x, new_var = first(dplyr::select(quant_segments$model$model, i)[,1]))
+      }
+      colnames(new_x)[colnames(new_x) == "new_var"] <- i
+    }
+  }
+
   #add back in. variable names
   colnames(new_x) <- colnames(quant_segments$model$model)[-1]
 
@@ -171,7 +196,6 @@ plot_lextrema <- function(quant_segments, plot_deriv = TRUE, show_segs=c("local_
         ggplot2::theme_bw()
     }
   }
-  ####DEPENDS ON Predictor variable always being in column 13, which is not always the case. Change to be variable dependent
   print(model_plot)
   if(plot_deriv){
     print(deriv_plot)
