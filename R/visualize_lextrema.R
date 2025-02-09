@@ -10,6 +10,7 @@
 #' @param plot_deriv boolean TRUE/FALSE if the first derivative should be plotted
 #' @param show_segs which segment types to show. see lextremagam::feature_codes for the options
 #' @param show_segs_deriv TRUE/FALSE if the derivative plot should be produced
+#' @param type on what scale to draw the data. The options are "response" or "link" with "response" as the default
 #'
 #' @returns a ggplot object
 #' @export plot_lextrema
@@ -44,6 +45,8 @@ plot_lextrema <- function(quant_segments, plot_deriv = TRUE, show_segs=c("local_
 #' @param plot_deriv boolean TRUE/FALSE if the first derivative should be plotted
 #' @param show_segs which segment types to show. see lextremagam::feature_codes for the options
 #' @param show_segs_deriv TRUE/FALSE if the derivative plot should be produced
+#' @param type on what scale to draw the data. The options are "response" or "link" with "response" as the default
+#' @param type on what scale to draw the data. The options are "response" or "link" with "response" as the default
 #'
 #' @returns a ggplot object
 .plot_lextrema_univar <- function(quant_segments, plot_deriv = TRUE, show_segs=c("local_max", "local_min"), show_segs_deriv = TRUE, type = "response"){
@@ -132,28 +135,16 @@ plot_lextrema <- function(quant_segments, plot_deriv = TRUE, show_segs=c("local_
     new_x <- cbind(new_x, by)
   }
 
-  #add all other variables here
-  # if(ncol(new_x)< I(ncol(quant_segments$model$model) - 1)) {
-  #   for(i in I(ncol(new_x)+2):ncol(quant_segments$model$model)){
-  #     if(is.numeric(quant_segments$model$model[, i])){
-  #       new_x[, i] <- mean(quant_segments$model$model[, i])
-  #     } else if (is.factor(quant_segments$model$model[, i]) | is.character(quant_segments$model$model[, i])){
-  #       new_x[, i] <- first(quant_segments$model$model[, i])
-  #     }
-  #     colnames(new_x)[i-1] <- colnames(quant_segments$model$model)[i]
-  #   }
-  # }
-
-  if(ncol(new_x)< I(ncol(quant_segments$model$model) - 1)) {
-    for(i in colnames(quant_segments$model$model)[-1]){
-      if(is.numeric(dplyr::select(quant_segments$model$model, i)[,1])){
-        new_x <- dplyr::mutate(new_x, new_var = mean(dplyr::select(quant_segments$model$model, i)[,1]))
-      } else if (is.factor(dplyr::select(quant_segments$model$model, i)[,1]) | is.character(dplyr::select(quant_segments$model$model, i)[,1])){
-        new_x <- dplyr::mutate(new_x, new_var = first(dplyr::select(quant_segments$model$model, i)[,1]))
+  if(ncol(new_x) < (ncol(quant_segments$model$model) - 1)) {
+    for(i in setdiff(colnames(quant_segments$model$model)[-1], colnames(new_x))) {
+      if(is.numeric(quant_segments$model$model[[i]])) {
+        new_x <- dplyr::mutate(new_x, new_var = mean(quant_segments$model$model[[i]]))
+      } else if (is.factor(quant_segments$model$model[[i]]) | is.character(quant_segments$model$model[[i]])) {
+          new_x <- dplyr::mutate(new_x, new_var = dplyr::first(quant_segments$model$model[[i]]))
       }
       colnames(new_x)[colnames(new_x) == "new_var"] <- i
     }
-  }
+    }
 
   #add back in. variable names
   colnames(new_x) <- colnames(quant_segments$model$model)[-1]

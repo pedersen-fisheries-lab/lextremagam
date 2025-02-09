@@ -13,7 +13,7 @@
 #' @param deriv_method whether to use gratia's derivatives function or marginaleffects' slopes function
 #' @param multivariate TRUE/FALSE if the model to be evaluated is multivariate
 #' @param smooth name of the smooth in the format \"s(...)\"
-#' @param, if using gratia::derivatives, TRUE/FALSE boolean whether or not the derivatives are calculated using the bayesian (default) or frequentist covariance matriz
+#' @param frequentist if using gratia::derivatives, TRUE/FALSE boolean whether or not the derivatives are calculated using the bayesian (default) or frequentist covariance matrix
 #'
 #' @returns a slopes object dataframe built by marginaleffects::slopes, including the model rowid, term, estimate, std.error, conf.low, conf.high, y, x
 quantify_lextrema2 <- function(mod, var = NULL, step_size = NULL, conf_level= 0.95, deriv_method = c("gratia", "marginaleffects"), multivariate = FALSE, smooth = NULL, frequentist = FALSE){
@@ -162,7 +162,7 @@ quantify_lextrema_multivar <- function(mod, var=NULL, smooth = NULL, step_size =
 #' @param step_size the step size at which to evaluate the first derivative
 #' @param conf_level the confidence level (between 0 and 1) at which the confidence interval of the first derivative is estimated
 #' @param deriv_method whether to use gratia's derivatives function or marginaleffects' slopes function
-#' @param, if using gratia::derivatives, TRUE/FALSE boolean whether or not the derivatives are calculated using the bayesian (default) or frequentist covariance matriz\x
+#' @param frequentist if using gratia::derivatives, TRUE/FALSE boolean whether or not the derivatives are calculated using the bayesian (default) or frequentist covariance matrix
 #'
 #' @returns a slopes object dataframe built by marginaleffects::slopes, including the model rowid, term, estimate, std.error, conf.low, conf.high, y, x
 #' @export quantify_lextrema
