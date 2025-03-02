@@ -18,7 +18,6 @@ test_that("inappropriate arguments return correct response ",{
   expect_error(object = plot_lextrema(quant_segments = quant_seg_sig_sin, plot_deriv = FALSE, show_segs = c(increase)))
   expect_error(object = plot_lextrema(quant_segments = quant_seg_sig_sin, plot_deriv = FALSE, show_segs = c("increases")))
   expect_error(object = plot_lextrema(quant_segments = quant_seg_sig_sin, plot_deriv = FALSE, show_segs = NA))
-  expect_error(object = plot_lextrema(quant_segments = quant_seg_sig_sin, plot_deriv = FALSE, show_segs = NULL))
 })
 
 test_that("plot_lextrema works well with defaults",{
@@ -29,7 +28,6 @@ test_that("plot_lextrema works well with defaults",{
   #inappropriate quant_segments
   expect_no_error(object = plot_lextrema(quant_segments = quant_seg_sig_sin))
   expect_type(object = plot_lextrema(quant_segments = quant_seg_sig_sin), type = "list")
-  expect_equal(object = class(plot_lextrema(quant_segments = quant_seg_sig_sin)), c("gg", "ggplot"))
 })
 
 

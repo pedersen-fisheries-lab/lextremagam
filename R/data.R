@@ -12,6 +12,21 @@
 #' @source see data-raw
 "data_sig_sin"
 
+#' Multivariate example data
+#'
+#' Practice and example dataset to text package functionality
+#'
+#' @format ## `data_multivar`
+#' A data frame with 100 rows and 5 columns:
+#' \describe{
+#'   \item{x1}{numerical predictor }
+#'   \item{x2}{factor predictor }
+#'   \item{x3}{numerical predictor }
+#'   \item{y_true}{the true response value}
+#'   \item{y}{the response with noise}
+#' }
+#' @source see data-raw
+"data_multivar"
 
 #' Comprehensive example curved data with all segment features present
 #'
