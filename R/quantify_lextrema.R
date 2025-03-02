@@ -86,7 +86,8 @@ quantify_lextrema_multivar <- function(mod, var=NULL, smooth = NULL, step_size =
              var %in% gratia::model_vars(mod),
              is.numeric(step_size) | is.null(step_size),
              is.numeric(conf_level),
-             conf_level >0 & conf_level < 1)
+             conf_level >0 & conf_level < 1,
+             !is.null(smooth))
 
   if (! any(class(mod) == "gam")) {
     warning("Your mod object does not seem to be a gam. This method has not been tested on non-gam objects and may not operate well")
@@ -96,16 +97,19 @@ quantify_lextrema_multivar <- function(mod, var=NULL, smooth = NULL, step_size =
     if(!is.null(smooth)){
     var <- substring(smooth, 3, nchar(smooth)-1)
     warning(paste0("No var is provided. This is very risky. Var extracted from smooth and has been set to \"", var, "\". If this is incorrect, please enter the true var value"))
-    else {
+    } else {
       stop("Neither var nor smooth were set. Since this is an analysis of a multivariate model, please identify which variable and smooth are to be analyzed")
     }
-
-    }
   }
 
-  if(!is.numeric(var)){
-    stop("Defined variable \"", var, "\" is not numeric, it is ", class(var), ". Please use a numeric variable")
+  if(grepl(var, smooth, ignore.case = FALSE)){
+    warning("var \"", var, "\" is not in the smooth term \"", smooth, "\". This will cause errors")
   }
+
+  if(!is.numeric(dplyr::select(mod$model, all_of(var))[1, 1])){
+    stop("Defined variable \"", var, "\" is not numeric. Please use a numeric variable")
+  }
+
   #variable management
   #Checking the step-size
   range <- max(dplyr::select(mod$model, all_of(var)))- min(dplyr::select(mod$model, all_of(var)))
@@ -216,6 +220,10 @@ quantify_lextrema <- function(mod, var = NULL, step_size = NULL, conf_level= 0.9
     if(is.null(var)){
       var <- gratia::model_vars(mod)[1]
       warning(paste0("No specific predictor variable was set. The first predictor was extracted. Evaluating the slope of: ", var))
+    }
+
+    if(!is.numeric(dplyr::select(mod$model, all_of(var))[1, 1])){
+      stop("The predictor variable evaluated must be numeric")
     }
 
   #generating predictor values to evaluate

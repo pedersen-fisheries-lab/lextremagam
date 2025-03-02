@@ -59,8 +59,6 @@ test_that("inappropriate arguments return correct response ",{
   expect_error(object = quantify_lextrema(mod = mod_sig_sin, conf_level = "95"))
   expect_error(object = quantify_lextrema(mod = mod_sig_sin, conf_level = 1))
   expect_error(object = quantify_lextrema(mod = mod_sig_sin, conf_level = 0))
-
-
 })
 
 #testthat all components are present
@@ -80,8 +78,7 @@ test_that("lextrema object has the right structure",{
 
 })
 
-
-test_that("results are as expected", {
+test_that("returns correct results", {
   data(data_sig_sin)
   data("data_compr")
 
@@ -113,17 +110,39 @@ test_that("multilextrema objects are approrpiate",{
 
   expect_error(quantify_lextrema(mod = mod_sep), "this is a multivariate model. The function is currently only set up to handle univariate models")
 
-  expect_no_error(suppressWarnings(quantify_lextrema_multivar(mod = mod_sep, var = "x1")))
-  expect_error(quantify_lextrema_multivar(mod = mod_sep),
-               "Neither var nor smooth were set. Since this is an analysis of a multivariate model, please identify which variable and smooth are to be analyzed")
-  expect_error(quantify_lextrema_multivar(mod = mod_sep, var = "x2"),
-               "Defined variable \"x2\" is not numeric, it is factor. Please use a numeric variable")
-
+  expect_no_error(suppressWarnings(quantify_lextrema_multivar(mod = mod_sep, var = "x1", smooth = "s(x1)")))
+  expect_error(quantify_lextrema_multivar(mod = mod_sep))
+  expect_error(quantify_lextrema_multivar(mod = mod_sep, var = "x2", smooth = "s(x2)"),
+               "Defined variable \"x2\" is not numeric. Please use a numeric variable")
+  expect_warning(quantify_lextrema_multivar(mod = mod_sep,smooth = "s(x1)", step_size =  0.01))
 
   #var 1, var 2, only var, only smooth,
+  quant_mod_sep_v1 <- quantify_lextrema_multivar(mod = mod_sep, var = "x1",smooth = "s(x1)", step_size =  0.01)
+  expect_equal(quant_mod_sep_v1$segment_summary$feature[3], "local_max")
+  expect_equal(c(quant_mod_sep_v1$segment_summary$x1_start[3], quant_mod_sep_v1$segment_summary$x1_end[3]), c(48.55480, 55.73553), tolerance = 1e-2)
+
+  quant_mod_sep_v3 <- quantify_lextrema_multivar(mod = mod_sep, var = "x3",smooth = "s(x3)", step_size =  0.01)
+  expect_equal(quant_mod_sep_v3$segment_summary$feature[1], "notrend")
+  expect_equal(c(quant_mod_sep_v3$segment_summary$x3_start[1], quant_mod_sep_v3$segment_summary$x3_end[1]), c(-11.1, 12.0), tolerance = 1e-2)
 
   #mod factor, for by =
+  mod_fac <- mgcv::gam(y~s(x1, by = x2), data = data_multivar, method = "REML")
+
+  expect_error(suppressWarnings(quantify_lextrema_multivar(mod = mod_fac, smooth = "s(x1)", step_size =0.01)))
+    #var must be specified for complex models like this
+  expect_error(suppressWarnings(quantify_lextrema_multivar(mod = mod_fac, smooth = "s(x1):x2A", step_size =0.01)))
+  expect_error(quantify_lextrema_multivar(mod = mod_fac, smooth = "s(x1):x2A", var = "x2", step_size =0.01))
+
+  quant_mod_fac_A <-quantify_lextrema_multivar(mod = mod_fac, smooth = "s(x1):x2A", var = "x1", step_size =0.01)
+  expect_equal(quant_mod_fac_A$segment_summary$feature[3], "local_max")
+  expect_equal(c(quant_mod_fac_A$segment_summary$x1_start[3], quant_mod_fac_A$segment_summary$x1_end[3]),  c(39.9, 63.5), tolerance = 1e-2)
+
+  mod_fac_x3 <- mgcv::gam(y~s(x3, by = x2), data = data_multivar, method = "REML")
+  quant_mod_fac_x3_A <-quantify_lextrema_multivar(mod = mod_fac_x3, smooth = "s(x3):x2A", var = "x3", step_size =0.01)
+  expect_equal(c(quant_mod_fac_x3_A$segment_summary$x3_start[1], quant_mod_fac_x3_A$segment_summary$x3_end[1]), c(-11.1, 12.0), tolerance = 1e-2)
+
   #mod random effect
-
-
+  mod_re <- mgcv::gam(y~s(x1)+s(x2, bs = "re") +s(x3), data=data_multivar, method = "REML")
+  expect_error(suppressWarnings(quantify_lextrema_multivar(mod = mod_re, smooth = "s(x2)", step_size = 0.01)))
 })
+

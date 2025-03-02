@@ -46,7 +46,6 @@ plot_lextrema <- function(quant_segments, plot_deriv = TRUE, show_segs=c("local_
 #' @param show_segs which segment types to show. see lextremagam::feature_codes for the options
 #' @param show_segs_deriv TRUE/FALSE if the derivative plot should be produced
 #' @param type on what scale to draw the data. The options are "response" or "link" with "response" as the default
-#' @param type on what scale to draw the data. The options are "response" or "link" with "response" as the default
 #'
 #' @returns a ggplot object
 .plot_lextrema_univar <- function(quant_segments, plot_deriv = TRUE, show_segs=c("local_max", "local_min"), show_segs_deriv = TRUE, type = "response"){
