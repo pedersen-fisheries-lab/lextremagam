@@ -20,6 +20,8 @@
 \item{show_segs}{which segment types to show. see lextremagam::feature_codes for the options}
 
 \item{show_segs_deriv}{TRUE/FALSE if the derivative plot should be produced}
+
+\item{type}{if the data should be plotted on the repsonse scale (default) or link scale}
 }
 \value{
 a ggplot object

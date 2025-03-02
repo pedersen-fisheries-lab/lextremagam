@@ -30,7 +30,7 @@ quantify_lextrema2(
 
 \item{smooth}{name of the smooth in the format \"s(...)\"}
 
-\item{, }{if using gratia::derivatives, TRUE/FALSE boolean whether or not the derivatives are calculated using the bayesian (default) or frequentist covariance matriz}
+\item{frequentist}{if using gratia::derivatives, TRUE/FALSE boolean whether or not the derivatives are calculated using the bayesian (default) or frequentist covariance matrix}
 }
 \value{
 a slopes object dataframe built by marginaleffects::slopes, including the model rowid, term, estimate, std.error, conf.low, conf.high, y, x

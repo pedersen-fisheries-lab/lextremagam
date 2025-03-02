@@ -20,6 +20,8 @@ plot_lextrema(
 \item{show_segs}{which segment types to show. see lextremagam::feature_codes for the options}
 
 \item{show_segs_deriv}{TRUE/FALSE if the derivative plot should be produced}
+
+\item{type}{on what scale to draw the data. The options are "response" or "link" with "response" as the default}
 }
 \value{
 a ggplot object

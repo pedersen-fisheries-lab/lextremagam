@@ -72,7 +72,7 @@ quantify_lextrema2 <- function(mod, var = NULL, step_size = NULL, conf_level= 0.
 #' @param step_size the step size at which to evaluate the first derivative
 #' @param conf_level the confidence level (between 0 and 1) at which the confidence interval of the first derivative is estimated
 #' @param deriv_method whether to use gratia's derivatives function or marginaleffects' slopes function
-#' @param, if using gratia::derivatives, TRUE/FALSE boolean whether or not the derivatives are calculated using the bayesian (default) or frequentist covariance matriz
+#' @param frequentist if using gratia::derivatives, TRUE/FALSE boolean whether or not the derivatives are calculated using the bayesian (default) or frequentist covariance matriz
 #'
 #' @returns a list object built by marginaleffects::slopes or gratia::derivative, including the model rowid, term, estimate, std.error, conf.low, conf.high, y, x
 #' @export quantify_lextrema_multivar
@@ -92,9 +92,19 @@ quantify_lextrema_multivar <- function(mod, var=NULL, smooth = NULL, step_size =
     warning("Your mod object does not seem to be a gam. This method has not been tested on non-gam objects and may not operate well")
   }
 
-  if(is.null(var)){
+  if(is.null(var) ){
+    if(!is.null(smooth)){
     var <- substring(smooth, 3, nchar(smooth)-1)
     warning(paste0("No var is provided. This is very risky. Var extracted from smooth and has been set to \"", var, "\". If this is incorrect, please enter the true var value"))
+    else {
+      stop("Neither var nor smooth were set. Since this is an analysis of a multivariate model, please identify which variable and smooth are to be analyzed")
+    }
+
+    }
+  }
+
+  if(!is.numeric(var)){
+    stop("Defined variable \"", var, "\" is not numeric, it is ", class(var), ". Please use a numeric variable")
   }
   #variable management
   #Checking the step-size
@@ -182,7 +192,7 @@ quantify_lextrema <- function(mod, var = NULL, step_size = NULL, conf_level= 0.9
 
     #Makeing sure the model is univariate
     if(length(gratia::model_vars(mod))>1){
-      stop("this is a multivariate model. The function is currently only set up to handle univariate models")
+      stop("this is a multivariate model. The function is currently only set up to handle univariate models. Please use quantify_lextrema_multivar() instead")
     }
 
   #variable management

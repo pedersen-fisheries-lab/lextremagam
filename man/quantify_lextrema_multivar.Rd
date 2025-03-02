@@ -27,7 +27,7 @@ quantify_lextrema_multivar(
 
 \item{deriv_method}{whether to use gratia's derivatives function or marginaleffects' slopes function}
 
-\item{, }{if using gratia::derivatives, TRUE/FALSE boolean whether or not the derivatives are calculated using the bayesian (default) or frequentist covariance matriz}
+\item{frequentist}{if using gratia::derivatives, TRUE/FALSE boolean whether or not the derivatives are calculated using the bayesian (default) or frequentist covariance matriz}
 }
 \value{
 a list object built by marginaleffects::slopes or gratia::derivative, including the model rowid, term, estimate, std.error, conf.low, conf.high, y, x

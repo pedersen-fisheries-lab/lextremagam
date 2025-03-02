@@ -65,7 +65,7 @@ plot_lextrema <- function(quant_segments, plot_deriv = TRUE, show_segs=c("local_
     colnames(quant_segments$model_slopes)[which(colnames(quant_segments$model_slopes)==".upper_ci")] <- "conf.high"
     colnames(quant_segments$model_slopes)[which(colnames(quant_segments$model_slopes)==".derivative")] <- "estimate"
 
-    predicted <- predict.gam(object = quant_segments$model, type = type, newdata = new_x)
+    predicted <- mgcv::predict.gam(object = quant_segments$model, type = type, newdata = new_x)
 
     quant_segments$model_slopes$predicted <- predicted
   }
@@ -120,6 +120,7 @@ plot_lextrema <- function(quant_segments, plot_deriv = TRUE, show_segs=c("local_
 #' @param plot_deriv boolean TRUE/FALSE if the first derivative should be plotted
 #' @param show_segs which segment types to show. see lextremagam::feature_codes for the options
 #' @param show_segs_deriv TRUE/FALSE if the derivative plot should be produced
+#' @param type if the data should be plotted on the repsonse scale (default) or link scale
 #'
 #' @returns a ggplot object
 .plot_lextrema_multivar <- function(quant_segments, plot_deriv = TRUE, show_segs=c("local_max", "local_min"), show_segs_deriv = TRUE, type = "response"){
