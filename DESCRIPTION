@@ -1,11 +1,10 @@
 Package: lextremagam
 Type: Package
 Title: Quantify Local Extrema Using Generalized Additive Model Derivatives
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: person("Natalie", "Dupont", email = "natalie.dupont@concordia.ca",
   role = c("aut", "cre"))
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Description: The lextremagam package serves as a streamlined way to quantify peaks and troughs in complex data using generalized additive models. While it was developed primarily for ecologists, it can be applied to any dataset where a local extremum (peak or trough) in a one-dimentional smooth is of interest. Broadly, this package takes a gam object generated using mgcv and identifies confidence intervals for local extrema (peaks or troughs) based on the first derivative of the smooth. This method, its application and its performance are described in [Dupont et al. preprint]. lextremagam can also identify other segments (increasing, decreasing and plateaus) based on the first derivative, but the properties of these segments have not been evaluated and they must be interpreted with caution.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true

@@ -5,7 +5,7 @@
 \title{Plot the lextrema (STILL UNIVARIATE)}
 \usage{
 .plot_lextrema_univar(
-  quant_segments,
+  lextr,
   plot_deriv = TRUE,
   show_segs = c("local_max", "local_min"),
   show_segs_deriv = TRUE,
@@ -13,7 +13,7 @@
 )
 }
 \arguments{
-\item{quant_segments}{a lextrema object produced by the function quantify_lextrema}
+\item{lextr}{a lextrema object produced by the function quantify_lextrema}
 
 \item{plot_deriv}{boolean TRUE/FALSE if the first derivative should be plotted}
 

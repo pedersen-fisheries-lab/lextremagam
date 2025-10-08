@@ -187,10 +187,10 @@ plot_lextrema <- function(lextr, plot_deriv = TRUE, show_segs=c("local_max", "lo
         ggplot2::theme_bw()
     }
   }
-  print(model_plot)
-  if(plot_deriv){
-    print(deriv_plot)
-  }
+  # print(model_plot)
+  # if(plot_deriv){
+  #   print(deriv_plot)
+  # }
 
   if(!plot_deriv){
     plots <- model_plot
