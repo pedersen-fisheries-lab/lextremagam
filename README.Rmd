@@ -1,0 +1,63 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# lextremagam
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+The lextremagam package serves as a streamlined way to quantify peaks and troughs in complex data using generalized additive models. While it was developed primarily for ecologists, it can be applied to any dataset where a local extremum (peak or trough) in a one-dimentional smooth is of interest. Broadly, this package takes a gam object generated using mgcv and identifies confidence intervals for local extrema (peaks or troughs) based on the first derivative of the smooth. This method, its application and its performance are described in [Dupont et al. preprint]. lextremagam can also identify other segments (increasing, decreasing and plateaus) based on the first derivative, but the properties of these segments have not been evaluated and they must be interpreted with caution.
+
+## Installation
+
+You can install the development version of lextremagam from [GitHub](https://github.com/) as below:
+
+
+``` r
+# if you do not have remotes installed
+# install.packages("remotes")
+```
+
+``` r
+#installing the package from github
+remotes::install_github("pedersen-fisheries-lab/lextremagam", build_vignettes = TRUE)
+```
+
+## Example
+
+This is a basic example which shows you how to solve a common problem:
+
+```{r example}
+library(lextremagam)
+## basic example code
+
+
+```
+
+What is special about using `README.Rmd` instead of just `README.md`? You can include R chunks like so:
+
+```{r cars}
+summary(cars)
+```
+
+You'll still need to render `README.Rmd` regularly, to keep `README.md` up-to-date. `devtools::build_readme()` is handy for this.
+
+You can also embed plots, for example:
+
+```{r pressure, echo = FALSE}
+plot(pressure)
+```
+
+In that case, don't forget to commit and push the resulting figure files, so they display on GitHub and CRAN.
