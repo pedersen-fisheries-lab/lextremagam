@@ -101,7 +101,7 @@ quantify_lextrema_multivar <- function(mod, var=NULL, smooth = NULL, step_size =
     }
   }
 
-  if(grepl(var, smooth, ignore.case = FALSE)){
+  if(!grepl(var, smooth, ignore.case = FALSE)){
     warning("var \"", var, "\" is not in the smooth term \"", smooth, "\". This will cause errors")
   }
 

@@ -1,29 +1,69 @@
 ---
-title: "lextremagam_example"
+title: "example analysis"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{lextremagam_example}
+  %\VignetteIndexEntry{example analysis}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
-
+  
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>", 
+  comment = "#>",
+  fig.height = 4, 
   fig.width = 6
 )
 ```
+Here are a few useful examples of lextremagam's uses. These examples use simulated data with the desired curve shapes to sow the different types of cases that lextremagam can handle.
 
+First, let's load lextremagam and ggplot2:
 ```{r setup}
 library(lextremagam)
 library(ggplot2)
 ```
 
+# 1. Simple curve example
 
-# Complex curve example
+This is the same example as in the readme file. It shows the basic functionalities of lextremagam
+```{r e1 import data}
 
-Let's look at an example where the function starts flat, then increases, 
+#import a simple dataset
+data("data_norm")
+plot(y~x, data = data_norm)
+
+#run a gam
+gam1 <- mgcv::gam(y~s(x), data= data_norm, method = "REML")
+gratia::draw(gam1, residuals = TRUE)
+```
+
+\n The gam certainly looks to be peaked! With the naked eye, we can approximate a possible location for this peak, but we cannot estimate a confidence interval for the peak. To do so, let's use quantify_lextrema.
+```{r run lextrema}
+lextr1 <- lextremagam::quantify_lextrema(mod = gam1,                  #mod is the gam model object to be evaluate
+                                         var = "x",                   #var is the variable 
+                                         step_size = 0.01,            #step_size is the Δx at which the derivative will be evaluated using finite differences
+                                         conf_level = 0.95,           #conf_level is the confidence level (1-α) at which to evaluate the peak
+                                         deriv_method = "gratia",     #lextremagam can use gratia (default) or marginaleffects (not recommended) for calculating the first derivated
+                                         frequentist = FALSE)         #lextremagam can either use the bayesian (default) or frequentist posterior variance-covariance matrix to calculate the first derivative uncertainty
+
+lextr1$segment_summary
+```
+
+quantify_lextrema outputs a lextrema object. This contains the original GAM model, the input variables, the calculated first derivative table and most importantly, a summary of the identified segments. Here for peaks (local_max) and troughs (local_min), the x_start and x_end are the lower and upper confidence bounds of the local extremum. The bounds of other segments are also given, but have no been evaluate for confidence
+
+
+lextremagam also provides a basic plotting function to easily visualize your data:
+```{r plot lextrema}
+lextremagam::plot_lextrema(lextr = lextr1,                       #lextr is the lextremagam object to be visualized
+                           plot_deriv = TRUE,           #plot_lextrema always produces a figure of the original model smooth. plot_deriv = TRUE will produce a second plot of the derivative smooth
+                           show_segs = "local_max",     #which segments to be shown in the smooth plot. You can specify multiple segments in a vector. (ex: show_segs = c("local_max", "local_min"))
+                           show_segs_deriv = TRUE,      # if the segments should be shown in the derivative plot. They will be shown as a ribbon
+                           type = "response" )          #if the original gam smooth should be plotted on the response scale or the link scale
+```
+
+# 2. Complex curve example
+
+Let's look at a univariate dataset but with a more complex functional relationship. This is similar to what you would find in longterm monitoring datasets.  
 
 ```{r}
 data("data_compr")
@@ -36,15 +76,16 @@ lines(y_true~x, data_compr)
 Let's now fit a gam of our choice to the data. Here, I am using adaptive splines with default settings to account for the abrupt changes in the curve shape 
 
 ```{r}
-gam_compr <- mgcv::gam(y~s(x, bs="ad"), data=data_compr)
+gam_compr <- mgcv::gam(y~s(x, bs="ad"), data=data_compr, method = "REML")
 
 gratia::appraise(gam_compr)
 gratia::draw(gam_compr, residuals=TRUE)
 
 ```
 
+\n
 ## Assessing the curve segments
-Now, let's evaluate the first derivative along the lenght of the curve to identify peaks and troughs.
+The fit of the gam looks good! Now, let's evaluate the first derivative along the length of the curve to identify peaks and troughs.
 
 For the quantify_lextrema function, var defines which predictor for which the first derivative is being assessed. 
 
@@ -60,16 +101,59 @@ print(lextrema$segment_summary)
 We can visualize the results as follows
 
 ```{r}
-lextrema_plot <- lextremagam::plot_lextrema(quant_segments = lextrema,  plot_deriv = TRUE, show_segs = c("peak", "trough"))
-lextrema_plot
+lextrema_plot <- lextremagam::plot_lextrema(lextr = lextrema,  plot_deriv = TRUE, show_segs = c("local_min", "local_max"))
+lextrema_plot$model_plot
 ```
 
-Let's compare these peak and trough confidence intervals to the true peak and trough locations. Looks like the confidence intervals capture the true peak well!
+Since this dataset was create manually, we actually know where the true peaks and troughs lie. Let's compare these peak and trough confidence intervals to the true peak and trough locations. Looks like the confidence intervals capture the true peak well!
 ```{r}
-#does it include the true values?
-lextrema_plot+geom_point(data=data.frame(x=c(49, 79, 154),
-                                         y=c(21.8, 8.2, 46.8),
-                                         feature = c("peak", "trough", "peak")), 
-                         aes(x=x, y=y, colour=feature))
+lextrema_plot$model_plot+geom_point(data=data.frame(x=c(49, 79, 154),
+                                                    y=c(21.8, 8.2, 46.8),
+                                                    feature = c("local_max", "local_min", "local_max")), 
+                                    aes(x=x, y=y, colour=feature))
 
 ```
+
+# 3. Multivariate example
+
+lextremagam also works with multivariate models! As long as you are evaluating a one-dimensional smooth (ie, not a tensor product) within the model, lextremagam will still evaluate it for peaks and troughs.
+```{r}
+data("data_multivar")
+#in this dataset, y varies primarily as a function of x1, and x2 factor B having a positive effect on y. x3 is here as random variable wth no correlation to the response
+ggplot(data = data_multivar)+
+  geom_point(aes(x = x1, y = y, col = x2))+
+  theme_classic()
+
+
+```
+
+## Fitting the gam
+Let's model this using a gam of our choice. Given what we know of the data structure, I am including x1 and x3 as thin-plate regression splines, and x2 as a simple linear predictor.
+
+```{r}
+gam_multivar <- mgcv::gam(y~s(x1)+x2 +s(x3), data=data_multivar, method = "REML")
+
+gratia::appraise(gam_multivar)
+gratia::draw(gam_multivar, residuals=TRUE, parametric = TRUE)
+
+```
+\n 
+## Assessing the curve segments
+Now, let's evaluate the first derivative along the length of the the smooth of x1 to identify the peak.
+
+When providing multivariate models, you must use the quantify_lextrema_multivar function. Unlike quantify_lextrema, this function is built to hand multiple predictors and correctly selecting the user-defined smooth to evaluate. In this function, it is best practice to specify both the variable of interest ("x1") and the exact smooth ("s(x1)") you want to evaluate. This is especially crucial when using the s( , **by = **) statement since this will create multiple smooths from a single variable.
+
+```{r}
+lextrema <- lextremagam::quantify_lextrema_multivar(mod = gam_multivar, var = "x1",smooth = "s(x1)", step_size = 0.01, conf_level = .95)
+
+print(lextrema$segment_summary)
+
+```
+## Visualizing the results
+We can visualize the results as follows. A single smooth in a multivariate model assumes that the other variables are kept constant. Here, this is the smooth as a function of x1 given that x2 = A and x3 = 0.5444368. 
+
+```{r}
+lextrema_plot <- lextremagam::plot_lextrema(lextr = lextrema,  plot_deriv = TRUE, show_segs = c("local_min", "local_max"))
+lextrema_plot$model_plot
+```
+

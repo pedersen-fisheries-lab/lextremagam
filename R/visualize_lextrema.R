@@ -23,7 +23,7 @@ plot_lextrema <- function(lextr, plot_deriv = TRUE, show_segs=c("local_max", "lo
     stop("plot_deriv must be a logical TRUE/FALSE value")
   }
   if (!all(show_segs %in% feature_codes)){
-    if( show_segs != "all"){
+    if( show_segs[1] != "all"){
       stop(paste0("all show_segs values must be codes represented in the approved feature codes: ", paste0(feature_codes, collapse = ", ")))
     }
   }
@@ -146,8 +146,8 @@ plot_lextrema <- function(lextr, plot_deriv = TRUE, show_segs=c("local_max", "lo
     }
     }
 
-  #add back in. variable names
-  colnames(new_x) <- colnames(lextr$model$model)[-1]
+  # #add back in. variable names
+  # colnames(new_x) <- colnames(lextr$model$model)[-1]
 
   if(lextr$deriv_method == "gratia"){
     colnames(lextr$model_slopes)[which(colnames(lextr$model_slopes)==".lower_ci")] <- "conf.low"
