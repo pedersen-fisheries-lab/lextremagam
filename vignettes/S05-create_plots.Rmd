@@ -10,7 +10,8 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>", 
+  root.dir = "~/Documents/Pedersen2023/Peaks/lextremagam"
 )
 ```
 
@@ -35,47 +36,170 @@ e1_4_summary_ad <- list(e1 = e1_summary,
 saveRDS(e1_4_summary_ad, "data-raw/sim/analy_results/e1_4_summary_adjalpha.RDS")
 ```
 
-#Type I error
+#Simulation plot
 ```{r}
-plot_fpe <- function(summary, title){
-  #TYPE I ERROR ####
-  e1_fpe <- ggplot(data=tidyr::pivot_longer(summary$e1$fperror, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "fperror"))+
-    geom_point(aes(x=dup, y=fperror, colour=method))+
-    geom_line(aes(x=dup, y=fperror, colour=method))+
-    geom_hline(aes(yintercept=0.05), linetype=2)+
-    labs(title = paste0("Exp 1 FPE,  ", title))
-  
-e2_fpe <- ggplot(data=tidyr::pivot_longer(summary$e2$fperror, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "fperror"))+
-  geom_point(aes(x=error, y=fperror, colour=method))+
-  geom_line(aes(x=error, y=fperror, colour=method))+
-  geom_hline(aes(yintercept=0.05), linetype=2)+
-  labs(title = paste0("Exp 2 FPE,  ", title))
+sim_dat_e1 <- read_parquet("data-raw/sim/data/sim_dat_e1.parquet")
+sim_dat_e1_ex <- filter(sim_dat_e1, rep == 1)
+sim_dat_e2 <- read_parquet("data-raw/sim/data/sim_dat_e2.parquet")
+sim_dat_e2_ex <- filter(sim_dat_e2, rep == 1)
+sim_dat_e3 <- read_parquet("data-raw/sim/data/sim_dat_e3_e50.parquet")
+sim_dat_e3_ex <- filter(sim_dat_e3, rep == 1)
+sim_dat_e4 <- read_parquet("data-raw/sim/data/sim_dat_e4.parquet")
+sim_dat_e4_ex <- filter(sim_dat_e4, rep == 1)
 
-e4_fpe <- ggplot(data=tidyr::pivot_longer(summary$e4$fperror, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "fperror"))+
-  geom_point(aes(x=param, y=fperror, colour=method))+
-  geom_line(aes(x=param, y=fperror, colour=method))+
-  geom_hline(aes(yintercept=0.05), linetype=2)+
-  facet_grid(dup~func)+
-  labs(title = paste0("Exp 4 FPE,  ", title))
+#needs work
+sim1_data_plot <- ggplot(data=sim_dat_e1_ex)+
+  geom_line(aes(x=x, y=y_true, group = func))+
+  geom_point(aes(x=x, y=y, colour = dup))+
+  facet_wrap(~as.factor(func))
 
-return(list(e1_fpe = e1_fpe, e2_fpe = e2_fpe, e4_fpe = e4_fpe))
-}
-
-fpe_adaptive <- plot_fpe(e1_4_summary_ad, "Adaptive Spline, Alpha = 0.05")
-fpe_tprs <- plot_fpe(e1_4_summary_tprs, "TPRS, Alpha = 0.05")
-fpe_adaptive_adj <- plot_fpe(e1_4_summary_adjalpha_ad, "Adaptive Spline, Alpha = sqrt(0.05)")
-fpe_tprs_adj <- plot_fpe(e1_4_summary_adjalpha, "TPRS, Alpha = sqrt(0.05)")
+sim2_data_plot <- ggplot(data=filter(sim_dat_e2_ex, error > .14& error < 0.16 | error >.49& error <.51 | error >0.94 ))+
+  geom_line(aes(x=x, y=y_true))+
+  geom_line(aes(x=x, y=y_true+error, group = as.factor(error), colour=error))+
+  geom_line(aes(x=x, y=y_true-error, group = as.factor(error), colour=error))+
+  scale_color_gradientn(colors = c( "#c6dbef", "#6baed6", "#2171b5"))+
+  labs(title = "Simulation Experiment 2", x = "x", y = "y")+
+  theme_bw()+
+  facet_grid(func~.)
 
 
-pdf("typeIerror_plots.pdf")
-fpe_adaptive
-fpe_tprs
-fpe_adaptive_adj
-fpe_tprs_adj
-dev.off()
+sim3_data_plot <- ggplot(filter(sim_dat_e3_ex, (func == "var-p-location" &(param <=.051 | param >.49& param <.51 | param >0.94 ))|
+                                 ( func == "var-p-skew" & (param < .16 | param >.84 | param >.49& param <.51))|
+                                  (func == "var-p-width" & (param <=.051 |param >0.29 & param <0.31 | param >0.94))))+
+  geom_line(aes(x=x, y=y_true, group = as.factor(param), color = param))+
+  scale_color_gradientn(colors = c( "#6baed6", "#2171b5", "#084594"))+
+  labs(title = "Simulation Experiment 3", x = "x", y = "y")+
+  theme_bw()+
+  facet_wrap(~func)
+
+sim4_data_plot <- ggplot(filter(sim_dat_e4_ex, (func == "var-location" &(param <=.051 | param >.49& param <.51 | param >0.94 ))|
+                                 ( func == "var-curvature" & (param < .26 | param >.94 | param >.49& param <.51))|
+                                  (func == "var-scale" & (param < .26 | param >.94 | param >.49& param <.51))))+
+  geom_line(aes(x=x, y=y_true, group = as.factor(param), color = param))+
+  scale_color_gradientn(colors = c( "#6baed6", "#2171b5", "#084594"))+
+  labs(title = "Simulation Experiment 4", x = "x", y = "y")+
+  theme_bw()+
+  facet_wrap(~func)
+
+
 
 ```
 
+#plot Type I error
+
+```{r}
+
+fpe_plot_data <- dplyr::filter(tidyr::pivot_longer(e4_summary$fperror, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "fperror"),
+                                          func == "var-location", dup %in% c(1,5))
+fpe_plot_data$func <- as.factor(fpe_plot_data$func)
+fpe_plot_data$dup <- as.factor(fpe_plot_data$dup)
+
+fperror_plot <- ggplot(data=fpe_plot_data)+
+  geom_point(aes(x=param, y=fperror, colour=method))+
+  geom_line(aes(x=param, y=fperror, colour=method))+
+  geom_hline(aes(yintercept=0.05), linetype=2)+
+  labs( x = "midpoint ", y = "Type I error rate")+
+  scale_color_discrete(labels = c("lextremagam", "quadratic test", "two-lines test"))+
+  theme_bw()+
+  facet_wrap(~dup, labeller = labeller(dup = c("1" = "n[dup] == 1", "5" = "n[dup] == 5"), .default = label_parsed))
+
+```
+
+#plot power
+```{r}
+power_plot_data <- dplyr::filter(tidyr::pivot_longer(e3_summary$power, cols = c("quad", "rprop", "pr_gr"), names_to = "method", values_to = "power"),
+                                          func == "var-p-skew", dup %in% c(1,5))
+power_plot_data$func <- as.factor(power_plot_data$func)
+power_plot_data$dup <- as.factor(power_plot_data$dup)
+power_plot_data$peak <-  (power_plot_data$param*10-1)/(power_plot_data$param*10+(10-power_plot_data$param*10)-2)
+
+power_plot <- ggplot(data=power_plot_data)+
+  geom_point(aes(x=peak, y=power, colour=method))+
+  geom_line(aes(x=peak, y=power, colour=method))+
+  labs( x = "peak location ", y = "Power rate")+
+  scale_color_discrete(labels = c("lextremagam", "quadratic test", "two-lines test"))+
+  theme_bw()+
+  facet_wrap(~dup, labeller = labeller(dup = c("1" = "n[dup] == 1", "5" = "n[dup] == 5"), .default = label_parsed))
+```
+
+#coverage plot
+```{r}
+cov_plot_data <- dplyr::filter(e3_summary$coverage, func == "var-p-skew")
+cov_plot_data$func <- as.factor(cov_plot_data$func)
+cov_plot_data$dup <- as.factor(cov_plot_data$dup)
+cov_plot_data$peak <-  (cov_plot_data$param*10-1)/(cov_plot_data$param*10+(10-cov_plot_data$param*10)-2)
+
+cov_plot <- ggplot(data=cov_plot_data)+
+  geom_point(aes(x=peak, y=coverage_gr, colour = dup))+
+  geom_line(aes(x=peak, y=coverage_gr, colour = dup))+
+  geom_hline(aes(yintercept=0.95), linetype=2)+
+  labs( x = "peak location ", y = "Coverage rate", colour = "number of duplicates")+
+  scale_colour_manual(values = c("#cce5ff", "#99ccff", "#66b2ff", "#3399ff", "#0073e6"))+
+  theme_bw()
+
+cov_plot
+
+cov_plot_data2 <- dplyr::filter(e3_summary$coverage, func == "var-p-width")
+cov_plot_data2$func <- as.factor(cov_plot_data2$func)
+cov_plot_data2$dup <- as.factor(cov_plot_data2$dup)
+cov_plot_data2$peak <-  0.5
+
+cov_plot2 <- ggplot(data=cov_plot_data2)+
+  geom_point(aes(x=param, y=coverage_gr, colour = dup))+
+  geom_line(aes(x=param, y=coverage_gr, colour = dup))+
+  geom_hline(aes(yintercept=0.95), linetype=2)+
+  labs( x = "peak width parameter", y = "Coverage rate", colour = "number of duplicates")+
+  scale_colour_manual(values = c("#cce5ff", "#99ccff", "#66b2ff", "#3399ff", "#0073e6"))+
+  theme_bw()
+```
+
+#no need for CI width I don't think
+```{r}
+
+```
+
+#bias
+```{r}
+#MUST USE CORRECTED BIAS ALL DATA ******
+bias_all_data <- readRDS("~/Documents/Pedersen2023/Peaks/lextremagam/data-raw/sim/analy_results/bias_all_data.RDS")
+
+bias_plot_data <- dplyr::filter(bias_all_data$e1_3_bias_ad$e3_bias, func == "var-p-skew")
+bias_plot_data$func <- as.factor(bias_plot_data$func)
+bias_plot_data$dup <- as.factor(bias_plot_data$dup)
+bias_plot_data$se <- bias_plot_data$bias_sd_gr_max/sqrt(bias_plot_data$n_gr)
+
+ggplot(data=bias_plot_data)+
+  geom_ribbon(aes(x = peak, ymin=bias_avg_gr_max-bias_sd_gr_max, ymax=bias_avg_gr_max+bias_sd_gr_max, group = dup), fill="#cce5ff", alpha=0.3)+
+  geom_point(aes(x=peak, y=bias_avg_gr_max, colour=dup))+
+  geom_line(aes(x=peak, y=bias_avg_gr_max, colour=dup))+
+  geom_hline(aes( yintercept=0), linetype=2)+
+  labs( x = "peak location ", y = "Coverage rate", colour = "number of duplicates", fill = "Standard Error")+
+  scale_colour_manual(values = c("#cce5ff", "#99ccff", "#66b2ff", "#3399ff", "#0073e6"))+
+  #scale_fill_manual(values = c("#cce5ff"))+
+  theme_bw()
+
+ggplot(data=bias_plot_data)+
+  geom_ribbon(aes(x = peak, ymin=bias_avg_gr_max-se, ymax=bias_avg_gr_max+se, group = dup), fill="#cce5ff", alpha=0.3)+
+  geom_point(aes(x=peak, y=bias_avg_gr_max, colour=dup))+
+  geom_line(aes(x=peak, y=bias_avg_gr_max, colour=dup))+
+  geom_hline(aes( yintercept=0), linetype=2)+
+  labs( x = "peak location ", y = "Bias", colour = "number of duplicates", fill = "Standard Error")+
+  scale_colour_manual(values = c("#cce5ff", "#99ccff", "#66b2ff", "#3399ff", "#0073e6"))+
+  #scale_fill_manual(values = c("#cce5ff"))+
+  theme_bw()
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
 #Power
 ```{r}
 plot_power <- function(summary, title){
