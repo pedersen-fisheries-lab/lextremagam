@@ -98,10 +98,10 @@ plot_lextrema <- function(lextr, plot_deriv = TRUE, show_segs=c("local_max", "lo
     }
   }
   ####DEPENDS ON Predictor variable always being in column 13, which is not always the case. Change to be variable dependent
-  print(model_plot)
-  if(plot_deriv){
-    print(deriv_plot)
-  }
+  # print(model_plot)
+  # if(plot_deriv){
+  #   print(deriv_plot)
+  # }
 
   if(!plot_deriv){
     plots <- model_plot
