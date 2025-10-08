@@ -76,7 +76,6 @@ quantify_lextrema2 <- function(mod, var = NULL, step_size = NULL, conf_level= 0.
 #'
 #' @returns a list object built by marginaleffects::slopes or gratia::derivative, including the model rowid, term, estimate, std.error, conf.low, conf.high, y, x
 #' @export quantify_lextrema_multivar
-
 quantify_lextrema_multivar <- function(mod, var=NULL, smooth = NULL, step_size = NULL, conf_level= 0.95, deriv_method = c("gratia", "marginaleffects"), frequentist = FALSE){
 
   deriv_method <- match.arg(deriv_method)
