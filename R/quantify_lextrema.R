@@ -62,9 +62,11 @@ quantify_lextrema2 <- function(mod, var = NULL, step_size = NULL, conf_level= 0.
   }
 }
 
-#' Estimate the first derivative
+#' Identify local maxima and minima in a smooth from a multivariate GAM
 #'
-#' Evaluates the first derivative at a given (very small) step size for a given gam model input. Note: THIS FUNCTION IS CURRENTLY UNIVARIATE
+#' Evaluates the first derivative at a given (very small) step size along the smooth of a given gam model input.
+#'
+#' Note: THIS FUNCTION IS BUILT FO UNIVARIATE GAMs. The quantify_lectrema() function is purpose-built for univariate models (ie, a single smooth of a single predictor)
 #'
 #' @param mod gam model object to be evaluated
 #' @param var predictor variable name to be evaluated
@@ -74,7 +76,7 @@ quantify_lextrema2 <- function(mod, var = NULL, step_size = NULL, conf_level= 0.
 #' @param deriv_method whether to use gratia's derivatives function or marginaleffects' slopes function
 #' @param frequentist if using gratia::derivatives, TRUE/FALSE boolean whether or not the derivatives are calculated using the bayesian (default) or frequentist covariance matriz
 #'
-#' @returns a list object built by marginaleffects::slopes or gratia::derivative, including the model rowid, term, estimate, std.error, conf.low, conf.high, y, x
+#' @returns eturns a lextrema object, which includes a model_slopes table, a segment summary table, the input gam model object, and the input var and deriv_method variables
 #' @export quantify_lextrema_multivar
 quantify_lextrema_multivar <- function(mod, var=NULL, smooth = NULL, step_size = NULL, conf_level= 0.95, deriv_method = c("gratia", "marginaleffects"), frequentist = FALSE){
 
@@ -166,9 +168,11 @@ quantify_lextrema_multivar <- function(mod, var=NULL, smooth = NULL, step_size =
   return(quant_segments)
 }
 
-#' Estimate the first derivative
+#' Identify local maxima and minima in a smooth from a GAM
 #'
-#' Evaluates the first derivative at a given (very small) step size for a given gam model input. Note: THIS FUNCTION IS CURRENTLY UNIVARIATE
+#' Evaluates the first derivative at a given (very small) step size along the smooth of a given gam model input.
+#'
+#' Note: THIS FUNCTION IS ONLY FOR UNIVARIATE GAMs. For multivariate GAMs (ie, multiple predictors), please use quantify_lextrema_multivar()
 #'
 #' @param mod gam model object to be evaluated
 #' @param var predictor variable over which the slope is evaluated
@@ -177,7 +181,7 @@ quantify_lextrema_multivar <- function(mod, var=NULL, smooth = NULL, step_size =
 #' @param deriv_method whether to use gratia's derivatives function or marginaleffects' slopes function
 #' @param frequentist if using gratia::derivatives, TRUE/FALSE boolean whether or not the derivatives are calculated using the bayesian (default) or frequentist covariance matrix
 #'
-#' @returns a slopes object dataframe built by marginaleffects::slopes, including the model rowid, term, estimate, std.error, conf.low, conf.high, y, x
+#' @returns Returns a lextrema object, which includes a model_slopes table, a segment summary table, the input gam model object, and the input var and deriv_method variables
 #' @export quantify_lextrema
 quantify_lextrema <- function(mod, var = NULL, step_size = NULL, conf_level= 0.95, deriv_method = c("gratia", "marginaleffects"), frequentist = FALSE){
   deriv_method <- match.arg(deriv_method)
@@ -265,7 +269,7 @@ quantify_lextrema <- function(mod, var = NULL, step_size = NULL, conf_level= 0.9
 #' @param var predictor variable name
 #' @param deriv_method gratia or marginaleffects
 #'
-#' @export find_segments
+#' @returns a table summarzing the slope segments
 find_segments <- function(est_slopes, var, deriv_method){
   #Checking that the est_slopes entry includes the necessary variables
   stopifnot(any(class(est_slopes) == "slopes") | any(class(est_slopes) == "marginaleffects" | any(class(est_slopes) == 'derivatives')),

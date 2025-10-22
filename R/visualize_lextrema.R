@@ -2,9 +2,9 @@
 # Functions to visualize extrema (peaks and troughs)
 # Author: Natalie Dupont
 
-#' Plot the lextrema (STILL UNIVARIATE)
+#' Plot the lextrema
 #'
-#' Returns a plot object
+#' Returns a plot showing delineated segments along a smooth when given a lextrema object. The lextrema object can be univariate or multivariate. Can also provide the first derivative plot of the smooth.
 #'
 #' @param lextr a lextrema object produced by the function quantify_lextrema
 #' @param plot_deriv boolean TRUE/FALSE if the first derivative should be plotted
@@ -12,7 +12,7 @@
 #' @param show_segs_deriv TRUE/FALSE if the derivative plot should show segments
 #' @param type on what scale to draw the data. The options are "response" or "link" with "response" as the default
 #'
-#' @returns a ggplot object
+#' @returns one or two ggplot object
 #' @export plot_lextrema
 plot_lextrema <- function(lextr, plot_deriv = TRUE, show_segs=c("local_max", "local_min"), show_segs_deriv = TRUE, type = "response"){
   shows_segs <- show_segs

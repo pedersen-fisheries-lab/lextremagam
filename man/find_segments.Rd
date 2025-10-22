@@ -13,6 +13,9 @@ find_segments(est_slopes, var, deriv_method)
 
 \item{deriv_method}{gratia or marginaleffects}
 }
+\value{
+a table summarzing the slope segments
+}
 \description{
 Identify the local extremas
 }

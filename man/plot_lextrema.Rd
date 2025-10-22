@@ -2,7 +2,7 @@
 % Please edit documentation in R/visualize_lextrema.R
 \name{plot_lextrema}
 \alias{plot_lextrema}
-\title{Plot the lextrema (STILL UNIVARIATE)}
+\title{Plot the lextrema}
 \usage{
 plot_lextrema(
   lextr,
@@ -24,8 +24,8 @@ plot_lextrema(
 \item{type}{on what scale to draw the data. The options are "response" or "link" with "response" as the default}
 }
 \value{
-a ggplot object
+one or two ggplot object
 }
 \description{
-Returns a plot object
+Returns a plot showing delineated segments along a smooth when given a lextrema object. The lextrema object can be univariate or multivariate. Can also provide the first derivative plot of the smooth.
 }

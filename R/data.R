@@ -1,6 +1,20 @@
+#' Normally-distributed data
+#'
+#' Practice and example dataset following a normal distribution
+#'
+#' @format ## `data_norm`
+#' A data frame with 200 rows and 3 columns:
+#' \describe{
+#'   \item{x}{predictor value}
+#'   \item{y_true}{the true response value}
+#'   \item{y}{the response with noise}
+#' }
+#' @source see data-raw
+"data_norm"
+
 #' Sigmoid-sine curve data
 #'
-#' Practice and example dataset to text package functionality
+#' Practice and example dataset to test package functionality. This dataset is highly multimodal and has a complex shape
 #'
 #' @format ## `data_sig_sin`
 #' A data frame with 101 rows and 3 columns:

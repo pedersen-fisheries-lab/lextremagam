@@ -39,7 +39,7 @@ remotes::install_github("pedersen-fisheries-lab/lextremagam", build_vignettes = 
 
 This is a basic example which shows you how to solve a common problem:
 
-```{r import data}
+```{r import_data}
 #load in lextremagam
 library(lextremagam)
 
@@ -48,12 +48,12 @@ data("data_norm")
 plot(y~x, data = data_norm)
 ```
 From a simple graph, this dataset seems to be peaked, but it's not super clear. Let's run a simple gam using mgcv 
-```{r run gam}
+```{r run_gam}
 gam1 <- mgcv::gam(y~s(x), data= data_norm, method = "REML")
 gratia::draw(gam1, residuals = TRUE)
 ```
 The gam certainly looks to be peaked! With the naked eye, we can approximate a possible location for this peak, but we cannot estimate a confidence interval for the peak. To do so, let's use quantify_lextrema!
-```{r run lextrema}
+```{r run_lextrema}
 lextr1 <- lextremagam::quantify_lextrema(mod = gam1,                  #mod is the gam model object to be evaluate
                                          var = "x",                   #var is the variable 
                                          step_size = 0.01,            #step_size is the Δx at which the derivative will be evaluated using finite differences
@@ -66,7 +66,7 @@ lextr1$segment_summary
 quantify_lextrema outputs a lextrema object. This contains the original GAM model, the input variables, the calculated first derivative table and most importantly, a summary of the identified segments. Here for peaks (local_max) and troughs (local_min), the x_start and x_end are the lower and upper confidence bounds of the local extremum. The bounds of other segments are also given, but have no been evaluate for confidence
 
 lextremagam provides a basic plotting function to easily visualize your data:
-```{r plot lextrema}
+```{r plot_lextrema}
 lextremagam::plot_lextrema(lextr = lextr1,              #lextr is the lextremagam object to be visualized
                                     plot_deriv = TRUE,           #plot_lextrema always produces a figure of the original model smooth. plot_deriv = TRUE will produce a second plot of the derivative smooth
                                     show_segs = "local_max",     #which segments to be shown in the smooth plot. You can specify multiple segments in a vector. (ex: show_segs = c("local_max", "local_min"))
@@ -75,3 +75,6 @@ lextremagam::plot_lextrema(lextr = lextr1,              #lextr is the lextremaga
 
 ```
 
+Here, we can see that the local maximum is highlighted on the original smooth plot. On the derivative plot, we can see where each segment is, coloured by the CI ribbons.
+
+Now you have an overview of the main functions available for use in the lextremagam package!

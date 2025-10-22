@@ -2,7 +2,7 @@
 % Please edit documentation in R/quantify_lextrema.R
 \name{quantify_lextrema_multivar}
 \alias{quantify_lextrema_multivar}
-\title{Estimate the first derivative}
+\title{Identify local maxima and minima in a smooth from a multivariate GAM}
 \usage{
 quantify_lextrema_multivar(
   mod,
@@ -30,8 +30,11 @@ quantify_lextrema_multivar(
 \item{frequentist}{if using gratia::derivatives, TRUE/FALSE boolean whether or not the derivatives are calculated using the bayesian (default) or frequentist covariance matriz}
 }
 \value{
-a list object built by marginaleffects::slopes or gratia::derivative, including the model rowid, term, estimate, std.error, conf.low, conf.high, y, x
+eturns a lextrema object, which includes a model_slopes table, a segment summary table, the input gam model object, and the input var and deriv_method variables
 }
 \description{
-Evaluates the first derivative at a given (very small) step size for a given gam model input. Note: THIS FUNCTION IS CURRENTLY UNIVARIATE
+Evaluates the first derivative at a given (very small) step size along the smooth of a given gam model input.
+}
+\details{
+Note: THIS FUNCTION IS BUILT FO UNIVARIATE GAMs. The quantify_lectrema() function is purpose-built for univariate models (ie, a single smooth of a single predictor)
 }

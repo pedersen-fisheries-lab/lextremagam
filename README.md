@@ -49,7 +49,7 @@ data("data_norm")
 plot(y~x, data = data_norm)
 ```
 
-<img src="man/figures/README-import data-1.png" width="100%" /> From a
+<img src="man/figures/README-import_data-1.png" width="100%" /> From a
 simple graph, this dataset seems to be peaked, but it’s not super clear.
 Let’s run a simple gam using mgcv
 
@@ -58,7 +58,7 @@ gam1 <- mgcv::gam(y~s(x), data= data_norm, method = "REML")
 gratia::draw(gam1, residuals = TRUE)
 ```
 
-<img src="man/figures/README-run gam-1.png" width="100%" /> The gam
+<img src="man/figures/README-run_gam-1.png" width="100%" /> The gam
 certainly looks to be peaked! With the naked eye, we can approximate a
 possible location for this peak, but we cannot estimate a confidence
 interval for the peak. To do so, let’s use quantify_lextrema!
@@ -101,9 +101,16 @@ lextremagam::plot_lextrema(lextr = lextr1,              #lextr is the lextremaga
 #> $model_plot
 ```
 
-<img src="man/figures/README-plot lextrema-1.png" width="100%" />
+<img src="man/figures/README-plot_lextrema-1.png" width="100%" />
 
     #> 
     #> $deriv_plot
 
-<img src="man/figures/README-plot lextrema-2.png" width="100%" />
+<img src="man/figures/README-plot_lextrema-2.png" width="100%" />
+
+Here, we can see that the local maximum is highlighted on the original
+smooth plot. On the derivative plot, we can see where each segment is,
+coloured by the CI ribbons.
+
+Now you have an overview of the main functions available for use in the
+lextremagam package!
